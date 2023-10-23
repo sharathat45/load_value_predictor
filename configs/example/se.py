@@ -50,6 +50,7 @@ from m5.objects import *
 from m5.params import NULL
 from m5.util import addToPath, fatal, warn
 
+
 addToPath('../')
 
 from ruby import Ruby
@@ -63,6 +64,9 @@ from common import MemConfig
 from common.FileSystemConfig import config_filesystem
 from common.Caches import *
 from common.cpu2000 import *
+
+sys.path.append('part1')
+from MyMinorCPU import *
 
 def get_processes(args):
     """Interprets provided args and returns a list of processes"""
@@ -119,6 +123,8 @@ def get_processes(args):
 parser = argparse.ArgumentParser()
 Options.addCommonOptions(parser)
 Options.addSEOptions(parser)
+Options.addFPUOperations(parser)
+Options.addBranchPredictionDegrade(parser)
 
 if '--ruby' in sys.argv:
     Ruby.define_options(parser)
@@ -156,6 +162,10 @@ else:
 
 
 (CPUClass, test_mem_mode, FutureClass) = Simulation.setCPUClass(args)
+
+if args.cpu_type == 'MinorCPU':
+    CPUClass = MyMinorCPU
+
 CPUClass.numThreads = numThreads
 
 # Check -- do not allow SMT with multiple CPUs
@@ -164,7 +174,8 @@ if args.smt and args.num_cpus > 1:
 
 np = args.num_cpus
 mp0_path = multiprocesses[0].executable
-system = System(cpu = [CPUClass(cpu_id=i) for i in range(np)],
+
+system = System(cpu = [CPUClass(options=args, cpu_id=i) for i in range(np)],
                 mem_mode = test_mem_mode,
                 mem_ranges = [AddrRange(args.mem_size)],
                 cache_line_size = args.cacheline_size)
@@ -269,4 +280,5 @@ if args.wait_gdb:
     system.workload.wait_for_remote_gdb = True
 
 root = Root(full_system = False, system = system)
+
 Simulation.run(args, root, system, FutureClass)

@@ -64,7 +64,6 @@ from common.FileSystemConfig import config_filesystem
 from common.Caches import *
 from common.cpu2000 import *
 
-
 import spec2k6_spec2k17
 
 def get_processes(args):
@@ -122,6 +121,7 @@ def get_processes(args):
 parser = argparse.ArgumentParser()
 Options.addCommonOptions(parser)
 Options.addSEOptions(parser)
+Options.addBranchPredictionDegrade(parser)
 
 if '--ruby' in sys.argv:
     Ruby.define_options(parser)
@@ -250,6 +250,8 @@ for i in range(np):
         indirectBPClass = \
             ObjectList.indirect_bp_list.get(args.indirect_bp_type)
         system.cpu[i].branchPred.indirectBranchPred = indirectBPClass()
+
+    system.cpu[i].prediction_degrade = args.prediction_degrade
 
     system.cpu[i].createThreads()
 

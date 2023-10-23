@@ -49,6 +49,7 @@
 #include "cpu/minor/cpu.hh"
 #include "cpu/minor/decode.hh"
 #include "cpu/minor/execute.hh"
+#include "cpu/minor/execute0.hh"
 #include "cpu/minor/fetch1.hh"
 #include "cpu/minor/fetch2.hh"
 #include "params/BaseMinorCPU.hh"
@@ -81,10 +82,12 @@ class Pipeline : public Ticked
     Latch<ForwardLineData> f1ToF2;
     Latch<BranchData> f2ToF1;
     Latch<ForwardInstData> f2ToD;
-    Latch<ForwardInstData> dToE;
+    Latch<ForwardInstData> dToE0;
+    Latch<ForwardInstData> E0ToE;
     Latch<BranchData> eToF1;
 
     Execute execute;
+    Execute0 execute0;
     Decode decode;
     Fetch2 fetch2;
     Fetch1 fetch1;
@@ -101,7 +104,8 @@ class Pipeline : public Ticked
         /* A stage representing wakeup of the whole processor */
         CPUStageId = 0,
         /* Real pipeline stages */
-        Fetch1StageId, Fetch2StageId, DecodeStageId, ExecuteStageId,
+        Fetch1StageId, Fetch2StageId, DecodeStageId,
+        Execute0StageId, ExecuteStageId,
         Num_StageId /* Stage count */
     };
 

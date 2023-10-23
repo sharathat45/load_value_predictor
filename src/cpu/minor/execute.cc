@@ -37,7 +37,9 @@
 
 #include "cpu/minor/execute.hh"
 
+#include <ctime>
 #include <functional>
+#include <random>
 
 #include "cpu/minor/cpu.hh"
 #include "cpu/minor/exec_context.hh"
@@ -74,6 +76,7 @@ Execute::Execute(const std::string &name_,
     memoryIssueLimit(params.executeMemoryIssueLimit),
     commitLimit(params.executeCommitLimit),
     memoryCommitLimit(params.executeMemoryCommitLimit),
+    branchPredictionDegradation(params.prediction_degrade),
     processMoreThanOneInput(params.executeCycleInput),
     fuDescriptions(*params.executeFuncUnits),
     numFuncUnits(fuDescriptions.funcUnits.size()),
@@ -89,7 +92,7 @@ Execute::Execute(const std::string &name_,
         params.executeLSQTransfersQueueSize,
         params.executeLSQStoreBufferSize,
         params.executeLSQMaxStoreBufferStoresPerCycle),
-    executeInfo(params.numThreads,
+   executeInfo (params.numThreads,
             ExecuteThreadInfo(params.executeCommitLimit)),
     interruptPriority(0),
     issuePriority(0),
@@ -267,18 +270,56 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
              *  carry on.
              *  Note that this information to the branch predictor might get
              *  overwritten by a "real" branch during this cycle */
-            DPRINTF(Branch, "Predicted a branch from 0x%x to 0x%x correctly"
+            // DPRINTF(Branch, "Predicted a branch from 0x%x to 0x%x correctly"
+            //     " inst: %s\n",
+            //     inst->pc->instAddr(), inst->predictedTarget->instAddr(),
+            //     *inst);
+
+            // reason = BranchData::CorrectlyPredictedBranch;
+
+    /* Degrade the branch prediction by squashing the ins, even its
+    correct PC fetch, according to branchPredictionDegradation variable*/
+            if (branchPredictionDegradation == 100)
+            {
+                DPRINTF(Branch,
+                "Predicted a branch from 0x%x to 0x%x correctly"
                 " inst: %s\n",
                 inst->pc->instAddr(), inst->predictedTarget->instAddr(),
                 *inst);
+                reason = BranchData::CorrectlyPredictedBranch;
+            }
+            else if (branchPredictionDegradation == 0)
+            {
+                DPRINTF(Branch,
+                "Degrading branch prediction by squashing the instructions
+                always for correctly predicted branches\n");
+                reason = BranchData::BadlyPredictedBranchTarget;
+            }
+            else
+            {
+                srand(time(0));
+                int random_number = rand() % 101;
+                if (random_number > branchPredictionDegradation)
+                {
+                    DPRINTF(Branch,
+                    "Degrading branch prediction by squashing the
+                    instructions randomly for correctly predicted
+                    branches\n");
+                    reason = BranchData::BadlyPredictedBranchTarget;
+                }
+                else
+                {
+                    reason = BranchData::CorrectlyPredictedBranch;
+                }
+            }
 
-            reason = BranchData::CorrectlyPredictedBranch;
         } else {
             /* Branch prediction got the wrong target */
-            DPRINTF(Branch, "Predicted a branch from 0x%x to 0x%x"
-                    " but got the wrong target (actual: 0x%x) inst: %s\n",
-                    inst->pc->instAddr(), inst->predictedTarget->instAddr(),
-                    target->instAddr(), *inst);
+            DPRINTF(Branch,
+            "Predicted a branch from 0x%x to 0x%x"
+            " but got the wrong target (actual: 0x%x) inst: %s\n",
+            inst->pc->instAddr(), inst->predictedTarget->instAddr(),
+            target->instAddr(), *inst);
 
             reason = BranchData::BadlyPredictedBranchTarget;
         }
@@ -609,8 +650,9 @@ Execute::issue(ThreadID thread_id)
             do {
                 FUPipeline *fu = funcUnits[fu_index];
 
-                DPRINTF(MinorExecute, "Trying to issue inst: %s to FU: %d\n",
-                    *inst, fu_index);
+                DPRINTF(MinorExecute,
+                 "Trying to issue inst: %s to FU: %d\n",
+                *inst, fu_index);
 
                 /* Does the examined fu have the OpClass-related capability
                  *  needed to execute this instruction?  Faults can always
@@ -627,9 +669,9 @@ Execute::issue(ThreadID thread_id)
                      *  this instruction to get to the end of its FU */
                     cpu.activityRecorder->activity();
 
-                    /* Mark the destinations for this instruction as
-                     *  busy */
-                    scoreboard[thread_id].markupInstDests(inst, cpu.curCycle() +
+                    /* Mark the destinations
+                    for this instruction as busy */
+                    scoreboard[thread_id].markupInstDests(inst, cpu.curCycle()+
                         Cycles(0), cpu.getContext(thread_id), false);
 
                     DPRINTF(MinorExecute, "Issuing %s to %d\n", inst->id, noCostFUIndex);

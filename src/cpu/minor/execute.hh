@@ -90,6 +90,9 @@ class Execute : public Named
     /** Number of memory instructions that can be committed per cycle */
     unsigned int memoryCommitLimit;
 
+    /*Branch Degradation variable*/
+    int branchPredictionDegradation;
+
     /** If true, more than one input line can be processed each cycle if
      *  there is room to execute more instructions than taken from the first
      *  line */

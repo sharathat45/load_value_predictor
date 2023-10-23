@@ -60,13 +60,13 @@ Decode::Decode(const std::string &name,
     inp(inp_),
     out(out_),
     nextStageReserve(next_stage_input_buffer),
-    outputWidth(params.executeInputWidth),
+    outputWidth(params.execute0InputWidth),
     processMoreThanOneInput(params.decodeCycleInput),
     decodeInfo(params.numThreads),
     threadPriority(0)
 {
     if (outputWidth < 1)
-        fatal("%s: executeInputWidth must be >= 1 (%d)\n", name, outputWidth);
+        fatal("%s: execute0InputWidth must be >= 1 (%d)\n", name, outputWidth);
 
     if (params.decodeInputBufferSize < 1) {
         fatal("%s: decodeInputBufferSize must be >= 1 (%d)\n", name,
