@@ -291,8 +291,8 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
             else if (branchPredictionDegradation == 0)
             {
                 DPRINTF(Branch,
-                "Degrading branch prediction by squashing the instructions
-                always for correctly predicted branches\n");
+                "Degrading branch prediction by squashing the instructions"
+                "always for correctly predicted branches\n");
                 reason = BranchData::BadlyPredictedBranchTarget;
             }
             else
@@ -302,9 +302,9 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
                 if (random_number > branchPredictionDegradation)
                 {
                     DPRINTF(Branch,
-                    "Degrading branch prediction by squashing the
-                    instructions randomly for correctly predicted
-                    branches\n");
+                    "Degrading branch prediction by squashing the"
+                    "instructions randomly for correctly predicted"
+                    "branches\n");
                     reason = BranchData::BadlyPredictedBranchTarget;
                 }
                 else
