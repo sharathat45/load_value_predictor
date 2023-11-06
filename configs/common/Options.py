@@ -531,18 +531,3 @@ def addFSOptions(parser):
     # Debug option
     parser.add_argument("--wait-gdb", default=False, action='store_true',
                         help="Wait for remote GDB to connect.")
-
-
-def addFPUOperations(parser):
-    parser.add_argument(
-        "--fpu_operation_latency", action="store", type=int,
-        default=None, help="""FPU Operation latency in cycles.""")
-
-    parser.add_argument(
-        "--fpu_issue_latency", action="store", type=int,
-        default=None, help="""FPU Issue latency in cycles.""")
-
-def addBranchPredictionDegrade(parser):
-    parser.add_argument(
-        "--prediction_degrade", action="store", type=int,
-        default=100, help="""Branch Prediction degrade rate""")

@@ -1,3 +1,26 @@
+# Load Value Predictor
+
+This project uses the default config O3CPU with the ARM ISA.
+
+## Makefile Commands
+
+- `make build`: Builds the CPU model.
+- `make`: Builds the executable file from the Cpp file with necessary CFLAGS.
+- `make run`: Runs the executable with the specified CPU Model (default is O3CPU) and caches enabled.
+- `make hello`: Runs the `hello` executable on the CPU model with caches enabled.
+- `make benchmark`: Runs the benchmark binary specified by "BENCHMARK_BIN" on the CPU model with caches enabled.
+- `make patch`: Creates a patch from (including) "COMMIT_BEGIN" to "COMMIT_END" and stores it in the `scripts/patches` folder.
+
+## Scripts Directory
+
+Any new scripts, benchmarks, Cpp, binary files added to the existing gem5 will be kept in this folder.
+
+- `bin/`: Contains executables or binary files.
+- `patches/`: Stores any created patches.
+- `results/`: Contains copies of `stats.txt` when running the automation script.
+- `benchmark_sweep.sh`: Sweeps through the benchmark and copies the stats to `results` and extracts the IPC from individual stats file.
+
+
 This is the gem5 simulator.
 
 The main website can be found at http://www.gem5.org

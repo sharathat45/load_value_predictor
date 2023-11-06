@@ -158,7 +158,20 @@ bool Execute0::isDrained()
 void
 Execute0::evaluate()
 {
-     /* Push input onto appropriate input buffer */
+    // StaticInstPtr next_inst =  (inp.outputWire->insts[execute0Info[tid].inputIndex])->staticInst; 
+    // StaticInstPtr curr_inst =  (out.inputWire->insts[execute0Info[tid].inputIndex])->staticInst;
+
+    // int raw = 0;
+    // if (next_inst->srcRegIdx(0) && next_inst->srcRegIdx(0) == curr_inst->destRegIdx(0))
+    // {
+    //     raw = 1;
+    // }
+    // if (next_inst->srcRegIdx(1) && next_inst->srcRegIdx(1) == curr_inst->destRegIdx(0))
+    // {
+    //     raw = 1;
+    // }
+
+    /* Push input onto appropriate input buffer */
     if (!inp.outputWire->isBubble())
         inputBuffer[inp.outputWire->threadId].setTail(*inp.outputWire);
 
@@ -194,8 +207,14 @@ Execute0::evaluate()
             }
             else
             {
-                execute0Info[tid].inputIndex++;
-
+                if (inst->isFault())
+                {
+                    execute0Info[tid].inputIndex++;
+                }
+                else
+                {
+                    execute0Info[tid].inputIndex++;
+                }
                 /* Correctly size the output before writing */
                 if (numForwarded == 0)
                     insts_out.resize(outputWidth);

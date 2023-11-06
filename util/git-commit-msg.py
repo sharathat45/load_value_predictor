@@ -32,6 +32,7 @@
 import os
 import re
 import sys
+
 from maint.lib import maintainers
 
 from style.repo import GitRepo
@@ -97,6 +98,7 @@ def _validateTags(commit_header):
     if (any(tag not in valid_tags for tag in tags)):
         invalid_tag = next((tag for tag in tags if tag not in valid_tags))
         _printErrorQuit("Invalid Gem5 tag: " + invalid_tag)
+
 
 # Go to git directory
 os.chdir(GitRepo().repo_base())

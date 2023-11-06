@@ -128,7 +128,7 @@ Pipeline::minorTrace() const
     fetch2.minorTrace();
     f2ToD.minorTrace();
     decode.minorTrace();
-    E0ToE.minorTrace();
+    dToE0.minorTrace();
     execute.minorTrace();
     eToF1.minorTrace();
     activityRecorder.minorTrace();
