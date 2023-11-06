@@ -38,6 +38,6 @@ clean:
 	rm -rf $(EXECUTABLE) build/
 
 patch:
-	git format-patch --stdout $(COMMIT_BEGIN)^..$(COMMIT_BEGIN) > ./scripts/patches/`date +%Y%m%d_%H%M%S`.patch
+	git format-patch --stdout $(COMMIT_BEGIN)^..$(COMMIT_END) > ./scripts/patches/`date +%Y%m%d_%H%M%S`.patch
 
 .PHONY: run clean build patch benchmark hello
