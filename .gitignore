@@ -1,3 +1,6 @@
+--maxinsts=10000000
+pipeview.out
+last_command
 build
 .vscode
 configs/spec2k6.old
