@@ -23,7 +23,7 @@ Any new scripts, benchmarks, Cpp, binary files added to the existing gem5 will b
 - `results/`: Contains copies of `stats.txt` when running the automation script.
 - `benchmark_sweep.sh`: Sweeps through the benchmark and copies the stats to `results` and extracts the IPC from individual stats file.
 
-## GEM5
+## Gem5
 
 This is the gem5 simulator.
 
