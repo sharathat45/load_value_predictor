@@ -160,13 +160,13 @@ class LVPUnit : public SimObject
                          const StaticInstPtr & inst)
             : seqNum(seq_num), pc(instPC), bpHistory(bp_history),
               indirectHistory(indirect_history), tid(_tid),
-              predTaken(pred_taken), inst(inst)
+              predPredictible(pred_taken), inst(inst)
         {}
 
         PredictorHistory(const PredictorHistory &other) :
             seqNum(other.seqNum), pc(other.pc), bpHistory(other.bpHistory),
             indirectHistory(other.indirectHistory), RASIndex(other.RASIndex),
-            tid(other.tid), predTaken(other.predTaken), usedRAS(other.usedRAS),
+            tid(other.tid), predPredictible(other.predPredictible), usedRAS(other.usedRAS),
             pushedRAS(other.pushedRAS), wasCall(other.wasCall),
             wasReturn(other.wasReturn), wasIndirect(other.wasIndirect),
             target(other.target), inst(other.inst)
@@ -204,7 +204,7 @@ class LVPUnit : public SimObject
         ThreadID tid;
 
         /** Whether or not it was predicted taken. */
-        bool predTaken;
+        bool predPredictible;
 
         /** Whether or not the RAS was used. */
         bool usedRAS = false;

@@ -65,7 +65,6 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, PCSta
 {
     // See if LCT predicts predictible.
     // If so, get its value from LVPT.
-    // Update the record to LVPT and CVT
 
     bool pred_predictible_ld = false;
     std::unique_ptr<PCStateBase> target(pc.clone());
@@ -85,132 +84,59 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, PCSta
 
     DPRINTF(Fetch, "[tid:%i] [sn:%llu] Creating prediction history for PC %s\n", tid, seqNum, pc);
 
-    PredictorHistory predict_record(seqNum, pc.instAddr(), pred_predictible_ld, ld_history, indirect_history, tid, inst);
+    PredictorHistory predict_record(seqNum, pc.instAddr(), pred_predictible_ld, ld_history, tid, inst);
 
     // Now lookup in the LVPT.
     if (pred_predictible_ld) {
+        ++stats.LVPTLookups;
+        // Check LVPT on ld
+        if (LVPT.valid(pc.instAddr(), tid)) {
+            ++stats.LVPTHits;
+            // use the LVPT to get ld value.
+            set(target, LVPT.lookup(pc.instAddr(), tid));
+            DPRINTF(Branch, "[tid:%i] [sn:%llu] Instruction %s predicted ld is %s\n", tid, seqNum, pc, *target);
+        } 
+        else {
+            DPRINTF(Branch, "[tid:%i] [sn:%llu] LVPT doesn't have a valid entry\n", tid, seqNum);
+            pred_predictible_ld = false;
+            predict_record.predPredictible = pred_predictible_ld;
+            
+            // The Direction of the LCT is altered because the LVPT did not have an entry
+            // The predictor needs to be updated accordingly
 
-        if (inst->isLoad())
-        {
-            ++stats.LVPTLookups;
-            // Check LVPT on ld
-            if (LVPT.valid(pc.instAddr(), tid)) {
-                ++stats.LVPTHits;
-                // use the LVPT to get ld value.
-                set(target, LVPT.lookup(pc.instAddr(), tid));
-                DPRINTF(Branch, "[tid:%i] [sn:%llu] Instruction %s predicted ld is %s\n", tid, seqNum, pc, *target);
-            } 
-            else {
-                    DPRINTF(Branch, "[tid:%i] [sn:%llu] LVPT doesn't have a valid entry\n", tid, seqNum);
-                    pred_predictible_ld = false;
-                    predict_record.predTaken = pred_predictible_ld;
-                    // The Direction of the branch predictor is altered
-                    // because the BTB did not have an entry
-                    // The predictor needs to be updated accordingly
-                    if (!inst->isCall() && !inst->isReturn()) {
-                        btbUpdate(tid, pc.instAddr(), ld_history);
-                        DPRINTF(Branch,
-                                "[tid:%i] [sn:%llu] btbUpdate "
-                                "called for %s\n",
-                                tid, seqNum, pc);
-                    } else if (inst->isCall() && !inst->isUncondCtrl()) {
-                        RAS[tid].pop();
-                        predict_record.pushedRAS = false;
-                    }
-                    inst->advancePC(*target);
-                }
+            LVPTUpdate(tid, pc.instAddr(), ld_history);
+            DPRINTF(Branch, "[tid:%i] [sn:%llu] LVPTUpdate called for %s\n", tid, seqNum, pc);
+            // inst->advancePC(*target);
         }
-        else
-        {
-            predict_record.wasIndirect = true;
-            ++stats.indirectLookups;
-            // Consult indirect predictor on indirect control
-            if (iPred->lookup(pc.instAddr(), *target, tid))
-            {
-                // Indirect predictor hit
-                ++stats.indirectHits;
-                DPRINTF(Branch,
-                        "[tid:%i] [sn:%llu] Instruction %s predicted "
-                        "indirect target is %s\n",
-                        tid, seqNum, pc, *target);
-            }
-            else
-            {
-                ++stats.indirectMisses;
-                pred_predictible_ld = false;
-                predict_record.predTaken = pred_predictible_ld;
-                DPRINTF(Branch,
-                        "[tid:%i] [sn:%llu] Instruction %s no indirect "
-                        "target\n",
-                        tid, seqNum, pc);
-                if (!inst->isCall() && !inst->isReturn())
-                {
-                }
-                else if (inst->isCall() && !inst->isUncondCtrl())
-                {
-                    RAS[tid].pop();
-                    predict_record.pushedRAS = false;
-                }
-                inst->advancePC(*target);
-            }
-            iPred->recordIndirect(pc.instAddr(), target->instAddr(),
-                                  seqNum, tid);
-        }
-        }
-    } else {
-        if (inst->isReturn()) {
-           predict_record.wasReturn = true;
-        }
-        inst->advancePC(*target);
-    }
-    predict_record.target = target->instAddr();
+        
+    } 
 
-    set(pc, *target);
-
-    if (iPred) {
-        // Update the indirect predictor with the direction prediction
-        // Note that this happens after indirect lookup, so it does not use
-        // the new information
-        // Note also that we use orig_pred_taken instead of pred_predictible_ld in
-        // as this is the actual outcome of the direction prediction
-        iPred->updateDirectionInfo(tid, orig_pred_taken);
-    }
+    // predict_record.value = target->instAddr();
+    // set(pc, *target);
 
     predHist[tid].push_front(predict_record);
 
-    DPRINTF(Branch,
-            "[tid:%i] [sn:%llu] History entry added. "
-            "predHist.size(): %i\n",
-            tid, seqNum, predHist[tid].size());
-
+    DPRINTF(Branch, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
     return pred_predictible_ld;
 }
 
-void
-LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
+void LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
 {
-    DPRINTF(Branch, "[tid:%i] Committing branches until "
-            "sn:%llu]\n", tid, done_sn);
+    DPRINTF(Branch, "[tid:%i] Committing branches until sn:%llu]\n", tid, done_sn);
 
-    while (!predHist[tid].empty() &&
-           predHist[tid].back().seqNum <= done_sn) {
+    while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
         // Update the branch predictor with the correct results.
         update(tid, predHist[tid].back().pc,
-                    predHist[tid].back().predTaken,
-                    predHist[tid].back().bpHistory, false,
+                    predHist[tid].back().predPredictible,
+                    predHist[tid].back().ldHistory, false,
                     predHist[tid].back().inst,
-                    predHist[tid].back().target);
-
-        if (iPred) {
-            iPred->commit(done_sn, tid, predHist[tid].back().indirectHistory);
-        }
+                    predHist[tid].back().value);
 
         predHist[tid].pop_back();
     }
 }
 
-void
-LVPUnit::squash(const InstSeqNum &squashed_sn, ThreadID tid)
+void LVPUnit::squash(const InstSeqNum &squashed_sn, ThreadID tid)
 {
     History &pred_hist = predHist[tid];
 
@@ -263,8 +189,7 @@ LVPUnit::squash(const InstSeqNum &squashed_sn, ThreadID tid)
     }
 }
 
-void
-LVPUnit::squash(const InstSeqNum &squashed_sn,
+void LVPUnit::squash(const InstSeqNum &squashed_sn,
                   const PCStateBase &corr_target,
                   bool actually_taken, ThreadID tid)
 {
