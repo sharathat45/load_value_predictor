@@ -23,7 +23,7 @@ STATSFILE_SUFFIX = "_stats.txt"
 def run_benchmark(benchmark_name: str):
     # Call the makefile with this benchmark name
     run_result = subprocess.run([
-        "make", "benchmark", f"BENCHMARK_BIN={benchmark_name}"],
+        "make", f"{benchmark_name}"],
         cwd=".."
     )
 

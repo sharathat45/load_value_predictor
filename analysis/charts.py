@@ -31,7 +31,7 @@ def bar_chart(
         ax.text(i, v, disp, rotation=45)
 
     ystart, yend = ax.get_ylim()
-    ax.set_ylim(0, float(f"{yend*1.2:.1g}"))
+    ax.set_ylim(0, float(f"{yend*1.2:.2g}"))
 
     fig.tight_layout()
     fig.savefig(out_filepath)
