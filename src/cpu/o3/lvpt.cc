@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Regents of The University of Michigan
+ * Copyright (c) 2023 Purdue University
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,122 +26,95 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cpu/pred/btb.hh"
+#include "cpu/o3/lvpt.hh"
 
 #include "base/intmath.hh"
 #include "base/trace.hh"
-#include "debug/Fetch.hh"
+#include "debug/IEW.hh"
 
 namespace gem5
 {
 
-namespace branch_prediction
+namespace load_value_prediction
 {
 
-DefaultBTB::DefaultBTB(unsigned _numEntries,
-                       unsigned _tagBits,
-                       unsigned _instShiftAmt,
-                       unsigned _num_threads)
+LVPT::LVPT(unsigned _numEntries,
+           unsigned _shiftAmt,
+           unsigned _numThreads)
     : numEntries(_numEntries),
-      tagBits(_tagBits),
-      instShiftAmt(_instShiftAmt),
-      log2NumThreads(floorLog2(_num_threads))
+      shiftAmt(_shiftAmt),
+      log2NumThreads(floorLog2(_numThreads))
 {
-    DPRINTF(Fetch, "BTB: Creating BTB object.\n");
+    DPRINTF(IEW, "LVPT: Creating LVPT object.\n");
 
     if (!isPowerOf2(numEntries)) {
-        fatal("BTB entries is not a power of 2!");
+        fatal("LVPT entries is not a power of 2!");
     }
 
-    btb.resize(numEntries);
+    lvpt.resize(numEntries);
 
     for (unsigned i = 0; i < numEntries; ++i) {
-        btb[i].valid = false;
+        lvpt[i].valid = false;
     }
 
     idxMask = numEntries - 1;
-
-    tagMask = (1 << tagBits) - 1;
-
-    tagShiftAmt = instShiftAmt + floorLog2(numEntries);
 }
 
 void
-DefaultBTB::reset()
+LVPT::reset()
 {
     for (unsigned i = 0; i < numEntries; ++i) {
-        btb[i].valid = false;
+        lvpt[i].valid = false;
     }
 }
 
 inline
 unsigned
-DefaultBTB::getIndex(Addr instPC, ThreadID tid)
+LVPT::getIndex(Addr loadAddr, ThreadID tid)
 {
-    // Need to shift PC over by the word offset.
-    return ((instPC >> instShiftAmt)
-            ^ (tid << (tagShiftAmt - instShiftAmt - log2NumThreads)))
-            & idxMask;
-}
-
-inline
-Addr
-DefaultBTB::getTag(Addr instPC)
-{
-    return (instPC >> tagShiftAmt) & tagMask;
+    // Need to shift load address over by the word offset.
+    return (loadAddr >> shiftAmt) & idxMask;
 }
 
 bool
-DefaultBTB::valid(Addr instPC, ThreadID tid)
+LVPT::valid(Addr loadAddr, ThreadID tid)
 {
-    unsigned btb_idx = getIndex(instPC, tid);
+    unsigned lvpt_idx = getIndex(loadAddr, tid);
 
-    Addr inst_tag = getTag(instPC);
+    assert(lvpt_idx < numEntries);
 
-    assert(btb_idx < numEntries);
-
-    if (btb[btb_idx].valid
-        && inst_tag == btb[btb_idx].tag
-        && btb[btb_idx].tid == tid) {
+    if (lvpt[lvpt_idx].valid && lvpt[lvpt_idx].tid == tid) {
         return true;
     } else {
         return false;
     }
 }
 
-// @todo Create some sort of return struct that has both whether or not the
-// address is valid, and also the address.  For now will just use addr = 0 to
-// represent invalid entry.
-const PCStateBase *
-DefaultBTB::lookup(Addr inst_pc, ThreadID tid)
+RegVal
+LVPT::lookup(Addr loadAddr, ThreadID tid)
 {
-    unsigned btb_idx = getIndex(inst_pc, tid);
+    unsigned lvpt_idx = getIndex(loadAddr, tid);
 
-    Addr inst_tag = getTag(inst_pc);
+    assert(lvpt_idx < numEntries);
 
-    assert(btb_idx < numEntries);
-
-    if (btb[btb_idx].valid
-        && inst_tag == btb[btb_idx].tag
-        && btb[btb_idx].tid == tid) {
-        return btb[btb_idx].target.get();
+    if (lvpt[lvpt_idx].valid && lvpt[lvpt_idx].tid == tid) {
+        return lvpt[lvpt_idx].value;
     } else {
-        return nullptr;
+        return 0xBAD1BAD1;
     }
 }
 
 void
-DefaultBTB::update(Addr inst_pc, const PCStateBase &target, ThreadID tid)
+LVPT::update(Addr loadAddr, RegVal loadValue, ThreadID tid)
 {
-    unsigned btb_idx = getIndex(inst_pc, tid);
+    unsigned lvpt_idx = getIndex(loadAddr, tid);
 
-    assert(btb_idx < numEntries);
+    assert(lvpt_idx < numEntries);
 
-    btb[btb_idx].tid = tid;
-    btb[btb_idx].valid = true;
-    set(btb[btb_idx].target, target);
-    btb[btb_idx].tag = getTag(inst_pc);
+    lvpt[lvpt_idx].tid = tid;
+    lvpt[lvpt_idx].valid = true;
+    lvpt[lvpt_idx].value = loadValue;
 }
 
-} // namespace branch_prediction
+} // namespace load_value_prediction
 } // namespace gem5

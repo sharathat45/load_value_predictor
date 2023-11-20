@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Regents of The University of Michigan
+ * Copyright (c) 2023 Purdue University
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,30 +26,27 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __CPU_PRED_BTB_HH__
-#define __CPU_PRED_BTB_HH__
+#ifndef __CPU_LVPT_HH__
+#define __CPU_LVPT_HH__
 
-#include "arch/generic/pcstate.hh"
+#include <vector>
+
 #include "base/logging.hh"
 #include "base/types.hh"
-#include "config/the_isa.hh"
 
 namespace gem5
 {
 
-namespace branch_prediction
+namespace load_value_prediction
 {
 
-class DefaultBTB
+class LVPT
 {
   private:
-    struct BTBEntry
+    struct LVPTEntry
     {
-        /** The entry's tag. */
-        Addr tag = 0;
-
-        /** The entry's target. */
-        std::unique_ptr<PCStateBase> target;
+        /** The entry's load value. */
+        RegVal value;
 
         /** The entry's thread id. */
         ThreadID tid;
@@ -59,77 +56,61 @@ class DefaultBTB
     };
 
   public:
-    /** Creates a BTB with the given number of entries, number of bits per
+    /** Creates a LVPT with the given number of entries, number of bits per
      *  tag, and instruction offset amount.
-     *  @param numEntries Number of entries for the BTB.
-     *  @param tagBits Number of bits for each tag in the BTB.
-     *  @param instShiftAmt Offset amount for instructions to ignore alignment.
+     *  @param numEntries Number of entries for the LVPT.
+     *  @param shiftAmt Offset amount for load addresses to ignore alignment.
+     *  @param numThreads Number of supported threads.
      */
-    DefaultBTB(unsigned numEntries, unsigned tagBits,
-               unsigned instShiftAmt, unsigned numThreads);
+    LVPT(unsigned numEntries, unsigned shiftAmt, unsigned numThreads);
 
     void reset();
 
-    /** Looks up an address in the BTB. Must call valid() first on the address.
-     *  @param inst_PC The address of the branch to look up.
+    /** Looks up an address in the LVPT. Must call valid() first on the address.
+     *  @param loadAddr The address of the load to look up.
      *  @param tid The thread id.
-     *  @return Returns the target of the branch.
+     *  @return Returns the predicted load value.
      */
-    const PCStateBase *lookup(Addr instPC, ThreadID tid);
+    RegVal lookup(Addr loadAddr, ThreadID tid);
 
-    /** Checks if a branch is in the BTB.
-     *  @param inst_PC The address of the branch to look up.
+    /** Checks if a load is in the LVPT.
+     *  @param loadAddr The address of the load to look up.
      *  @param tid The thread id.
-     *  @return Whether or not the branch exists in the BTB.
+     *  @return Whether or not the index is valid in the LVPT.
      */
-    bool valid(Addr instPC, ThreadID tid);
+    bool valid(Addr loadAddr, ThreadID tid);
 
-    /** Updates the BTB with the target of a branch.
-     *  @param inst_pc The address of the branch being updated.
-     *  @param target_pc The target address of the branch.
+    /** Updates the LVPT with the value of a load.
+     *  @param loadAddr The address of the load being updated.
+     *  @param loadValue The value of the load being updated.
      *  @param tid The thread id.
      */
-    void update(Addr inst_pc, const PCStateBase &target_pc, ThreadID tid);
+    void update(Addr loadAddr, RegVal loadValue, ThreadID tid);
 
   private:
-    /** Returns the index into the BTB, based on the branch's PC.
-     *  @param inst_PC The branch to look up.
-     *  @return Returns the index into the BTB.
+    /** Returns the index into the LVPT, based on the load's address.
+     *  @param loadAddr The load to look up.
+     *  @return Returns the index into the LVPT.
      */
-    inline unsigned getIndex(Addr instPC, ThreadID tid);
+    inline unsigned getIndex(Addr loadAddr, ThreadID tid);
 
-    /** Returns the tag bits of a given address.
-     *  @param inst_PC The branch's address.
-     *  @return Returns the tag bits.
-     */
-    inline Addr getTag(Addr instPC);
+    /** The actual LVPT. */
+    std::vector<LVPTEntry> lvpt;
 
-    /** The actual BTB. */
-    std::vector<BTBEntry> btb;
-
-    /** The number of entries in the BTB. */
+    /** The number of entries in the LVPT. */
     unsigned numEntries;
 
     /** The index mask. */
     unsigned idxMask;
 
-    /** The number of tag bits per entry. */
-    unsigned tagBits;
-
-    /** The tag mask. */
-    unsigned tagMask;
-
-    /** Number of bits to shift PC when calculating index. */
-    unsigned instShiftAmt;
-
-    /** Number of bits to shift PC when calculating tag. */
-    unsigned tagShiftAmt;
+    /** Number of bits to shift address when calculating index. */
+    unsigned shiftAmt;
 
     /** Log2 NumThreads used for hashing threadid */
     unsigned log2NumThreads;
 };
 
-} // namespace branch_prediction
+} // namespace load_value_prediction
 } // namespace gem5
 
-#endif // __CPU_PRED_BTB_HH__
+#endif // __CPU_LVPT_HH__
