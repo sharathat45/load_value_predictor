@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2020 ARM Limited
+ # Copyright (c) 2018, 2020 ARM Limited
 #
 # The license below extends only to copyright in the software and shall
 # not be construed as granting a license to any other intellectual
