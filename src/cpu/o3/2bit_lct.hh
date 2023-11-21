@@ -5,7 +5,6 @@
 
 #include "base/sat_counter.hh"
 #include "base/types.hh"
-#include "cpu/o3/lvp_unit.hh"
 
 namespace gem5
 {
@@ -20,7 +19,7 @@ namespace o3
  * predictor state that needs to be recorded or updated; the update can be
  * determined solely by the ld being predictible or not.
  */
-class LCT : public LVPUnit
+class LCT 
 {
   public:
     /**

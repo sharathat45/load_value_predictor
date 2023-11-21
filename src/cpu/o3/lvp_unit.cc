@@ -6,7 +6,7 @@
 #include "base/compiler.hh"
 #include "base/trace.hh"
 #include "config/the_isa.hh"
-// #include "debug/Branch.hh"
+#include "debug/Branch.hh"
 
 namespace gem5
 {
@@ -25,20 +25,15 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
       instShiftAmt(params.instShiftAmt)
 {}
 
-void LVPUnit::drainSanityCheck() const
-{
-    // We shouldn't have any outstanding requests when we resume from a drained system.
-    for ([[maybe_unused]] const auto& ph : predHist)
-        assert(ph.empty());
-}
 
-bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, LdValueBase &ld_Value, ThreadID tid);{
+bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid);
+{
     // See if LCT predicts predictible.
     // If so, get its value from LVPT.
 
     bool pred_predictible_ld = false;
 
-    std::unique_ptr<LdValueBase> ldval(ld_Value.clone()); // should be load value
+    std::unique_ptr<RegVal> ldval(ld_Value.clone()); // should be load value
 
     ++stats.lookups;
 
@@ -50,10 +45,10 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, LdVal
         ++stats.condPredicted;
         pred_predictible_ld = lookup(tid, pc.instAddr(), ld_history);
 
-        DPRINTF(Fetch, "[tid:%i] [sn:%llu] LVP predicted %i for PC %s\n", tid, seqNum,  pred_predictible_ld, pc);
+        DPRINTF(Branch, "[tid:%i] [sn:%llu] LVP predicted %i for PC %s\n", tid, seqNum,  pred_predictible_ld, pc);
     }
     
-    DPRINTF(Fetch, "[tid:%i] [sn:%llu] Creating prediction history for PC %s\n", tid, seqNum, pc);
+    DPRINTF(Branch, "[tid:%i] [sn:%llu] Creating prediction history for PC %s\n", tid, seqNum, pc);
     PredictorHistory predict_record(seqNum, pc.instAddr(), pred_predictible_ld, ld_history, tid, inst);
 
     // Now lookup in the LVPT if its predictible or constant.
@@ -74,10 +69,6 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, LdVal
             pred_predictible_ld = false;
             predict_record.predPredictible = pred_predictible_ld;
             
-            // The Direction of the LCT is altered because the LVPT did not have an entry
-            // The LVPT needs to be updated accordingly, LCT default is don't predict
-
-            lvptUpdate(tid, pc.instAddr(), ld_history);
             DPRINTF(Branch, "[tid:%i] [sn:%llu] LVPTUpdate called for %s\n", tid, seqNum, pc);
         }
     }
@@ -85,13 +76,13 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, LdVal
     // predict_record.ldval = ldval->instAddr();
 
     predHist[tid].push_front(predict_record);
-    DPRINTF(Fetch, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
+    DPRINTF(Branch, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
     return pred_predictible_ld;
 }
 
 void LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
 {
-    DPRINTF(Fetch, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
+    DPRINTF(Branch, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
 
     while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
         // Update the LCT with the correct results.
@@ -101,8 +92,49 @@ void LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
                predHist[tid].back().inst,
                predHist[tid].back().ldval);
 
+        // The Direction of the LCT is altered because the LVPT did not have an entry
+        // The LVPT needs to be updated accordingly, LCT default is don't predict
+
+        lvptUpdate(tid, pc.instAddr(), ld_history);
+        
         predHist[tid].pop_back();
     }
+}
+
+/*
+LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
+    : statistics::Group(parent),
+      ADD_STAT(lookups, statistics::units::Count::get(),
+              "Number of BP lookups"),
+      ADD_STAT(condPredicted, statistics::units::Count::get(),
+               "Number of conditional branches predicted"),
+      ADD_STAT(condIncorrect, statistics::units::Count::get(),
+               "Number of conditional branches incorrect"),
+      ADD_STAT(LVPTLookups, statistics::units::Count::get(),
+               "Number of BTB lookups"),
+      ADD_STAT(LVPTHits, statistics::units::Count::get(), "Number of BTB hits"),
+      ADD_STAT(BTBHitRatio, statistics::units::Ratio::get(), "BTB Hit Ratio",
+               LVPTHits / LVPTLookups),
+      ADD_STAT(RASUsed, statistics::units::Count::get(),
+               "Number of times the RAS was used to get a target."),
+      ADD_STAT(RASIncorrect, statistics::units::Count::get(),
+               "Number of incorrect RAS predictions."),
+      ADD_STAT(indirectLookups, statistics::units::Count::get(),
+               "Number of indirect predictor lookups."),
+      ADD_STAT(indirectHits, statistics::units::Count::get(),
+               "Number of indirect target hits."),
+      ADD_STAT(indirectMisses, statistics::units::Count::get(),
+               "Number of indirect misses."),
+      ADD_STAT(indirectMispredicted, statistics::units::Count::get(),
+               "Number of mispredicted indirect branches.")
+{
+    BTBHitRatio.precision(6);
+}
+void LVPUnit::drainSanityCheck() const
+{
+    // We shouldn't have any outstanding requests when we resume from a drained system.
+    for ([[maybe_unused]] const auto& ph : predHist)
+        assert(ph.empty());
 }
 
 void LVPUnit::squash(const InstSeqNum &squashed_sn, ThreadID tid)
@@ -114,15 +146,15 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, ThreadID tid)
         // This call should delete the ldHistory.
         squash(tid, pred_hist.front().ldHistory);
 
-        DPRINTF(Fetch, "[tid:%i] [squash sn:%llu] Removing history for [sn:%llu] PC %#x\n", tid, squashed_sn, pred_hist.front().seqNum, pred_hist.front().pc);
+        DPRINTF(Branch, "[tid:%i] [squash sn:%llu] Removing history for [sn:%llu] PC %#x\n", tid, squashed_sn, pred_hist.front().seqNum, pred_hist.front().pc);
 
         pred_hist.pop_front();
 
-        DPRINTF(Fetch, "[tid:%i] [squash sn:%llu] predHist.size(): %i\n", tid, squashed_sn, predHist[tid].size());
+        DPRINTF(Branch, "[tid:%i] [squash sn:%llu] predHist.size(): %i\n", tid, squashed_sn, predHist[tid].size());
     }
 }
 
-void LVPUnit::squash(const InstSeqNum &squashed_sn, const LdValueBase &corr_ldval, bool actually_predictible, ThreadID tid)
+void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bool actually_predictible, ThreadID tid)
 {
     // Now that we know that a ldval was mispredicted, we need to undo
     // all the branches that have been seen up until this branch and
@@ -271,34 +303,7 @@ void LVPUnit::dump()
     }
 }
 
-// LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
-//     : statistics::Group(parent),
-//       ADD_STAT(lookups, statistics::units::Count::get(),
-//               "Number of BP lookups"),
-//       ADD_STAT(condPredicted, statistics::units::Count::get(),
-//                "Number of conditional branches predicted"),
-//       ADD_STAT(condIncorrect, statistics::units::Count::get(),
-//                "Number of conditional branches incorrect"),
-//       ADD_STAT(LVPTLookups, statistics::units::Count::get(),
-//                "Number of BTB lookups"),
-//       ADD_STAT(LVPTHits, statistics::units::Count::get(), "Number of BTB hits"),
-//       ADD_STAT(BTBHitRatio, statistics::units::Ratio::get(), "BTB Hit Ratio",
-//                LVPTHits / LVPTLookups),
-//       ADD_STAT(RASUsed, statistics::units::Count::get(),
-//                "Number of times the RAS was used to get a target."),
-//       ADD_STAT(RASIncorrect, statistics::units::Count::get(),
-//                "Number of incorrect RAS predictions."),
-//       ADD_STAT(indirectLookups, statistics::units::Count::get(),
-//                "Number of indirect predictor lookups."),
-//       ADD_STAT(indirectHits, statistics::units::Count::get(),
-//                "Number of indirect target hits."),
-//       ADD_STAT(indirectMisses, statistics::units::Count::get(),
-//                "Number of indirect misses."),
-//       ADD_STAT(indirectMispredicted, statistics::units::Count::get(),
-//                "Number of mispredicted indirect branches.")
-// {
-//     BTBHitRatio.precision(6);
-// }
+*/
 
 } // namespace o3
 } // namespace gem5

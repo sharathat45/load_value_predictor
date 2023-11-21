@@ -16,6 +16,14 @@ COMMIT_BEGIN = 1e3d7d0
 COMMIT_END =  1e3d7d0
 
 BENCHMARK_CONFIG = configs/spec/spec_se.py
+DEBUG_CLASS = LVPUnit
+DEBUG = 0
+
+ifeq ($(DEBUG), 1)
+	DEBUG_FLAGS = --debug-flags=$(DEBUG_CLASS) --debug-file=trace.out
+endif
+
+.PHONY: run clean build patch benchmark hello hello_debug run_debug debug sjeng lbm milc astar leslie3d namd sjeng_debug lbm_debug milc_debug astar_debug leslie3d_debug namd_debug
 
 $(EXECUTABLE): $(SRC_C)
 	$(CC) $(SRC_C) -o $(EXECUTABLE) -lm5
@@ -25,17 +33,17 @@ build:
 #  build/x86/out/m5
 
 run: $(EXECUTABLE)
-	$(MODEL) $(CONFIG) $(CONFIG_FLAGS) -c $(EXECUTABLE)
+	$(MODEL) $(DEBUG_FLAGS) $(CONFIG) $(CONFIG_FLAGS) -c $(EXECUTABLE)
 	@echo "$(CONFIG) $(CONFIG_FLAGS) -c $(EXECUTABLE)" > last_command
 
 hello:
-	$(MODEL) $(CONFIG) $(CONFIG_FLAGS) -c $(HELLO_EXECUTABLE)
+	$(MODEL) $(DEBUG_FLAGS) $(CONFIG) $(CONFIG_FLAGS) -c $(HELLO_EXECUTABLE)
 	@echo "$(CONFIG) $(CONFIG_FLAGS) -c $(HELLO_EXECUTABLE)" > last_command
 
 BENCHMARKS = sjeng lbm milc astar leslie3d namd
 $(BENCHMARKS):
 	BENCHMARK_BIN=$@; \
-	$(MODEL) $(BENCHMARK_CONFIG) $(CONFIG_FLAGS) -b $$BENCHMARK_BIN
+	$(MODEL) $(DEBUG_FLAGS) $(BENCHMARK_CONFIG) $(CONFIG_FLAGS) -b $$BENCHMARK_BIN
 	@echo "$(BENCHMARK_CONFIG) $(CONFIG_FLAGS) -b $@" > last_command
 
 patch:
@@ -46,12 +54,7 @@ debug:
 	./util/o3-pipeview.py -c 500 -o pipeview.out --color m5out/trace.out
 	less -r pipeview.out
 
-debug_run:
-	$(MODEL) --debug-flags=Branch --debug-file=trace.out $(CONFIG) $(CONFIG_FLAGS) -c $(EXECUTABLE)
-	@echo "$(CONFIG) $(CONFIG_FLAGS) -c $(EXECUTABLE)" > last_command
-
 clean:
 	rm -rf $(EXECUTABLE) 
 # rm -rf $(EXECUTABLE) build/
 
-.PHONY: run clean build patch benchmark hello debug

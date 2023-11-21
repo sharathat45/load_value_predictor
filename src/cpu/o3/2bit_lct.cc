@@ -3,7 +3,7 @@
 #include "base/intmath.hh"
 #include "base/logging.hh"
 #include "base/trace.hh"
-// #include "debug/Fetch.hh"
+#include "debug/Branch.hh"
 
 namespace gem5
 {
@@ -26,13 +26,13 @@ LCT::LCT(const BaseO3CPUParams &params)
         fatal("Invalid number of LCT predictor sets! Check lctCtrBits.\n");
     }
 
-    DPRINTF(Fetch, "index mask: %#x\n", indexMask); 
+    DPRINTF(Branch, "index mask: %#x\n", indexMask); 
 
-    DPRINTF(Fetch, "local predictor size: %i\n", lctSize); 
+    DPRINTF(Branch, "local predictor size: %i\n", lctSize); 
 
-    DPRINTF(Fetch, "local counter bits: %i\n", lctCtrBits); 
+    DPRINTF(Branch, "local counter bits: %i\n", lctCtrBits); 
 
-    DPRINTF(Fetch, "instruction shift amount: %i\n", instShiftAmt); 
+    DPRINTF(Branch, "instruction shift amount: %i\n", instShiftAmt); 
 }
 
 void LCT::lvptUpdate(ThreadID tid, Addr ld_addr, void *&ld_history)
@@ -46,11 +46,11 @@ bool LCT::lookup(ThreadID tid, Addr ld_addr, void *&ld_history)
     bool predictible;
     unsigned lct_idx = getLocalIndex(ld_addr);
 
-    DPRINTF(Fetch, "Looking up index %#x\n", lct_idx); 
+    DPRINTF(Branch, "Looking up index %#x\n", lct_idx); 
 
     uint8_t counter_val = lctCtrs[lct_idx];
 
-    DPRINTF(Fetch, "prediction is %i.\n", (int)counter_val); 
+    DPRINTF(Branch, "prediction is %i.\n", (int)counter_val); 
 
     predictible = getPrediction(counter_val);
 
@@ -70,16 +70,16 @@ void LCT:: update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history
     // Update the local predictor.
     lct_idx = getLocalIndex(ld_addr);
 
-    DPRINTF(Fetch, "Looking up index %#x\n", lct_idx);
+    DPRINTF(Branch, "Looking up index %#x\n", lct_idx);
 
     if (predictible)
     {
-        DPRINTF(Fetch, "ld ins address updated as predictible.\n");
+        DPRINTF(Branch, "ld ins address updated as predictible.\n");
         lctCtrs[lct_idx]++;
     }
     else
     {
-        DPRINTF(Fetch, "ld ins address updated as not predictible.\n");
+        DPRINTF(Branch, "ld ins address updated as not predictible.\n");
         lctCtrs[lct_idx]--;
     }
 }

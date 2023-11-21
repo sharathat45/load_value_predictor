@@ -1,12 +1,11 @@
-#ifndef __CPU_PRED_BPRED_UNIT_HH__
-#define __CPU_PRED_BPRED_UNIT_HH__
+#ifndef __CPU_O3_LVP_UNIT_HH__
+#define __CPU_O3_LVP_UNIT_HH__
 
 #include <deque>
 
 #include "base/statistics.hh"
 #include "base/types.hh"
-#include "cpu/pred/LVPT.hh"
-#include "cpu/pred/indirect.hh"
+#include "cpu/o3/lvpt.hh"
 #include "cpu/inst_seq.hh"
 #include "cpu/static_inst.hh"
 #include "sim/sim_object.hh"
@@ -36,7 +35,7 @@ class LVPUnit : public SimObject
      * @param tid The thread id.
      * @return Returns if the ld is predictible or not.
      */
-    bool predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, LdValueBase &ld_Value, ThreadID tid);
+    bool predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid);
 
     /**
      * Tells the LCT to commit any updates until the given sequence number.
@@ -62,7 +61,7 @@ class LVPUnit : public SimObject
      * @param actually_predictible The correct lvp direction.
      * @param tid The thread id.
      */
-    void squash(const InstSeqNum &squashed_sn, const LdValueBase &corr_ldval, bool actually_predictible, ThreadID tid);
+    void squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bool actually_predictible, ThreadID tid);
 
     /**
      * @param ld_history Pointer to the history object.  The predictor
@@ -103,7 +102,7 @@ class LVPUnit : public SimObject
      * @param inst_PC The PC to look up.
      * @return The ld value.
      */
-    const LdValueBase * LVPTLookup(Addr inst_pc)
+    const RegVal * LVPTLookup(Addr inst_pc)
     {
         return LVPT.lookup(inst_pc, 0);
     }
@@ -127,7 +126,7 @@ class LVPUnit : public SimObject
      * @param inst_PC The ld ins PC that will be updated.
      * @param ldval The ld value that will be added to the LVPT.
      */
-    void LVPTUpdate(Addr instPC, const LdValueBase &ldval)
+    void LVPTUpdate(Addr instPC, const RegVal &ldval)
     {
         LVPT.update(instPC, target, 0);
     }
@@ -226,4 +225,4 @@ class LVPUnit : public SimObject
 } // namespace o3
 } // namespace gem5
 
-#endif // __CPU_PRED_BPRED_UNIT_HH__
+#endif // __CPU_O3_LVP_UNIT_HH__
