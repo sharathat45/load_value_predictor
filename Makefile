@@ -1,5 +1,7 @@
 BASE_NAME = daxpy
-EXECUTABLE = scripts/bin/$(BASE_NAME)
+EXECUTABLE = scripts/bin/daxpy-armv7-binary 
+# EXECUTABLE =  scripts/bin/$(BASE_NAME)
+
 SRC_C = scripts/$(BASE_NAME).cpp
 SRC_H = include
 ASSEMBLY_FLAG = -S
@@ -43,6 +45,10 @@ debug:
 	$(MODEL) --debug-flags=O3PipeView --debug-start=1 --debug-file=trace.out `cat last_command` -m 1000000
 	./util/o3-pipeview.py -c 500 -o pipeview.out --color m5out/trace.out
 	less -r pipeview.out
+
+debug_run:
+	$(MODEL) --debug-flags=Branch --debug-file=trace.out $(CONFIG) $(CONFIG_FLAGS) -c $(EXECUTABLE)
+	@echo "$(CONFIG) $(CONFIG_FLAGS) -c $(EXECUTABLE)" > last_command
 
 clean:
 	rm -rf $(EXECUTABLE) 

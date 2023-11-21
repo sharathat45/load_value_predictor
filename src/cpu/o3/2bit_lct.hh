@@ -26,7 +26,7 @@ class LCT : public LVPUnit
     /**
      * Default LCT constructor.
      */
-    LCT(const LocalBPParams &params);
+    LCT(const BaseO3CPUParams &params);
 
     /**
      * Looks up the given address in the LCT and returns

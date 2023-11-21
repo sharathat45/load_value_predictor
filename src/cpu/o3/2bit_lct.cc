@@ -57,14 +57,12 @@ bool LCT::lookup(ThreadID tid, Addr ld_addr, void *&ld_history)
     return predictible;
 }
 
-void LCT:: update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history,
-            bool squashed, const StaticInstPtr & inst, Addr corrTarget)
+void LCT:: update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history, bool squashed, const StaticInstPtr & inst, Addr ldval)
 {
     assert(ld_history == NULL);
     unsigned lct_idx;
 
-    // No state to restore, and we do not update on the wrong
-    // path.
+    // No state to restore, and we do not update on the wrong path.
     if (squashed) {
         return;
     }

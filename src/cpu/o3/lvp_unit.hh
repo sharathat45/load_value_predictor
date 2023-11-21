@@ -5,7 +5,7 @@
 
 #include "base/statistics.hh"
 #include "base/types.hh"
-#include "cpu/pred/btb.hh"
+#include "cpu/pred/LVPT.hh"
 #include "cpu/pred/indirect.hh"
 #include "cpu/inst_seq.hh"
 #include "cpu/static_inst.hh"
@@ -23,29 +23,23 @@ namespace o3
 class LVPUnit : public SimObject
 {
   public:
-      typedef BranchPredictorParams Params;
-    /**
-     * @param params The params object, that has the size of the BP and BTB.
-     */
-    BPredUnit(const Params &p);
+    
+    LVPUnit(const BaseO3CPUParams &params);
 
     /** Perform sanity checks after a drain. */
     void drainSanityCheck() const;
 
     /**
-     * Predicts whether or not the instruction is a taken branch, and the
-     * target of the branch if it is taken.
-     * @param inst The branch instruction.
-     * @param PC The predicted PC is passed back through this parameter.
+     * Predicts whether or not the ld instruction is predictible or not, and the value of the ld instruction if it is predictible.
+     * @param inst The ld instruction.
+     * @param ld_Value The predicted value is passed back through this parameter.
      * @param tid The thread id.
-     * @return Returns if the branch is taken or not.
+     * @return Returns if the ld is predictible or not.
      */
-    bool predict(const StaticInstPtr &inst, const InstSeqNum &seqNum,
-                 PCStateBase &pc, ThreadID tid);
+    bool predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, LdValueBase &ld_Value, ThreadID tid);
 
     /**
-     * Tells the branch predictor to commit any updates until the given
-     * sequence number.
+     * Tells the LCT to commit any updates until the given sequence number.
      * @param done_sn The sequence number to commit any older updates up until.
      * @param tid The thread id.
      */
@@ -61,227 +55,168 @@ class LVPUnit : public SimObject
 
     /**
      * Squashes all outstanding updates until a given sequence number, and
-     * corrects that sn's update with the proper address and taken/not taken.
+     * corrects that sn's update with the proper ld val and predictible/not.
      * @param squashed_sn The sequence number to squash any younger updates up
      * until.
-     * @param corr_target The correct branch target.
-     * @param actually_taken The correct branch direction.
+     * @param corr_ldval The correct ld value.
+     * @param actually_predictible The correct lvp direction.
      * @param tid The thread id.
      */
-    void squash(const InstSeqNum &squashed_sn,
-                const PCStateBase &corr_target,
-                bool actually_taken, ThreadID tid);
+    void squash(const InstSeqNum &squashed_sn, const LdValueBase &corr_ldval, bool actually_predictible, ThreadID tid);
 
     /**
-     * @param bp_history Pointer to the history object.  The predictor
+     * @param ld_history Pointer to the history object.  The predictor
      * will need to update any state and delete the object.
      */
-    virtual void squash(ThreadID tid, void *bp_history) = 0;
+    virtual void squash(ThreadID tid, void *ld_history) = 0;
 
     /**
      * Looks up a given PC in the BP to see if it is taken or not taken.
-     * @param inst_PC The PC to look up.
-     * @param bp_history Pointer that will be set to an object that
+     * @param ld_addr The PC to look up.
+     * @param ld_history Pointer that will be set to an object that
      * has the branch predictor state associated with the lookup.
      * @return Whether the branch is taken or not taken.
      */
-    virtual bool lookup(ThreadID tid, Addr instPC, void * &bp_history) = 0;
+    virtual bool lookup(ThreadID tid, Addr ld_addr, void *&ld_history) = 0;
 
-     /**
-     * If a branch is not taken, because the BTB address is invalid or missing,
+    /**
+     * If a ld is not predictible, because the LVPT address is invalid or missing,
      * this function sets the appropriate counter in the global and local
-     * predictors to not taken.
+     * predictors to not predictible.
      * @param inst_PC The PC to look up the local predictor.
-     * @param bp_history Pointer that will be set to an object that
-     * has the branch predictor state associated with the lookup.
+     * @param ld_history Pointer that will be set to an object that
+     * has the ld predictor state associated with the lookup.
      */
-    virtual void btbUpdate(ThreadID tid, Addr instPC, void * &bp_history) = 0;
+    virtual void lvptUpdate(ThreadID tid, Addr ld_addr, void *&ld_history) = 0;
 
     /**
-     * Looks up a given PC in the BTB to see if a matching entry exists.
+     * Looks up a given ld ins addr in the LVPT to see if a matching entry exists.
      * @param inst_PC The PC to look up.
-     * @return Whether the BTB contains the given PC.
+     * @return Whether the LVPT contains the given PC.
      */
-    bool BTBValid(Addr instPC) { return BTB.valid(instPC, 0); }
+    bool LVPTValid(Addr instPC) { return LVPT.valid(instPC, 0); }
 
     /**
-     * Looks up a given PC in the BTB to get the predicted target. The PC may
+     * Looks up a given PC in the LVPT to get the predicted ld value. The PC may
      * be changed or deleted in the future, so it needs to be used immediately,
      * and/or copied for use later.
      * @param inst_PC The PC to look up.
-     * @return The address of the target of the branch.
+     * @return The ld value.
      */
-    const PCStateBase *
-    BTBLookup(Addr inst_pc)
+    const LdValueBase * LVPTLookup(Addr inst_pc)
     {
-        return BTB.lookup(inst_pc, 0);
+        return LVPT.lookup(inst_pc, 0);
     }
 
     /**
-     * Updates the BP with taken/not taken information.
-     * @param inst_PC The branch's PC that will be updated.
-     * @param taken Whether the branch was taken or not taken.
-     * @param bp_history Pointer to the branch predictor state that is
-     * associated with the branch lookup that is being updated.
+     * Updates the LCT with predictible/not  information.
+     * @param inst_PC The ld PC that will be updated.
+     * @param predictible Whether the ld was predictible or not.
+     * @param ld_history Pointer to the ld predictor state that is
+     * associated with the ld lookup that is being updated.
      * @param squashed Set to true when this function is called during a
      * squash operation.
      * @param inst Static instruction information
-     * @param corrTarget The resolved target of the branch (only needed
-     * for squashed branches)
+     * @param ldval The actual ld value(only needed for squashed lds)
      * @todo Make this update flexible enough to handle a global predictor.
      */
-    virtual void update(ThreadID tid, Addr instPC, bool taken,
-                   void *bp_history, bool squashed,
-                   const StaticInstPtr &inst, Addr corrTarget) = 0;
+    virtual void update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history, bool squashed, const StaticInstPtr &inst, Addr ldval) = 0;
+
     /**
-     * Updates the BTB with the target of a branch.
-     * @param inst_PC The branch's PC that will be updated.
-     * @param target_PC The branch's target that will be added to the BTB.
+     * Updates the LVPT with the ldval of a ld ins.
+     * @param inst_PC The ld ins PC that will be updated.
+     * @param ldval The ld value that will be added to the LVPT.
      */
-    void
-    BTBUpdate(Addr instPC, const PCStateBase &target)
+    void LVPTUpdate(Addr instPC, const LdValueBase &ldval)
     {
-        BTB.update(instPC, target, 0);
+        LVPT.update(instPC, target, 0);
     }
 
 
     void dump();
 
-  private:
-    struct PredictorHistory
-    {
-        /**
-         * Makes a predictor history struct that contains any
-         * information needed to update the predictor, BTB, and RAS.
-         */
-        PredictorHistory(const InstSeqNum &seq_num, Addr instPC,
-                         bool pred_taken, void *bp_history,
-                         void *indirect_history, ThreadID _tid,
-                         const StaticInstPtr & inst)
-            : seqNum(seq_num), pc(instPC), bpHistory(bp_history),
-              indirectHistory(indirect_history), tid(_tid),
-              predPredictible(pred_taken), inst(inst)
-        {}
+    private:
+      struct PredictorHistory
+      {
+          /**
+           * Makes a predictor history struct that contains any
+           * information needed to update the LCT and LVPT
+           */
+          PredictorHistory(const InstSeqNum &seq_num, Addr instPC, bool pred_predictible_ld, void *ld_history, ThreadID _tid, const StaticInstPtr &inst)
+              : seqNum(seq_num), pc(instPC), ldHistory(ld_history), tid(_tid), predPredictible(pred_predictible_ld), inst(inst)
+          {
+          }
 
-        PredictorHistory(const PredictorHistory &other) :
-            seqNum(other.seqNum), pc(other.pc), bpHistory(other.bpHistory),
-            indirectHistory(other.indirectHistory), RASIndex(other.RASIndex),
-            tid(other.tid), predPredictible(other.predPredictible), usedRAS(other.usedRAS),
-            pushedRAS(other.pushedRAS), wasCall(other.wasCall),
-            wasReturn(other.wasReturn), wasIndirect(other.wasIndirect),
-            target(other.target), inst(other.inst)
-        {
-            set(RASTarget, other.RASTarget);
-        }
+          PredictorHistory(const PredictorHistory &other) : seqNum(other.seqNum), pc(other.pc), ldHistory(other.ldHistory),
+                                                            tid(other.tid), predPredictible(other.predPredictible),
+                                                            ldval(other.ldval), inst(other.inst)
+          {
+          }
 
-        bool
-        operator==(const PredictorHistory &entry) const
-        {
-            return this->seqNum == entry.seqNum;
-        }
+          bool
+          operator==(const PredictorHistory &entry) const
+          {
+              return this->seqNum == entry.seqNum;
+          }
 
-        /** The sequence number for the predictor history entry. */
-        InstSeqNum seqNum;
+          /** The sequence number for the predictor history entry. */
+          InstSeqNum seqNum;
 
-        /** The PC associated with the sequence number. */
-        Addr pc;
+          /** The PC associated with the sequence number. */
+          Addr pc;
 
-        /** Pointer to the history object passed back from the branch
-         * predictor.  It is used to update or restore state of the
-         * branch predictor.
-         */
-        void *bpHistory = nullptr;
+          /** Pointer to the history object passed back from the ld
+           * predictor.  It is used to update or restore state of the
+           * ld predictor.
+           */
+          void *ldHistory = nullptr;
 
-        void *indirectHistory = nullptr;
+          /** The thread id. */
+          ThreadID tid;
 
-        /** The RAS target (only valid if a return). */
-        std::unique_ptr<PCStateBase> RASTarget;
+          /** Whether or not it was predictible ld. */
+          bool predPredictible;
 
-        /** The RAS index of the instruction (only valid if a call). */
-        unsigned RASIndex = 0;
+          /** ld value of the ld ins, First it is predicted, and fixed later if necessary*/
+          Addr ldval = MaxAddr;
 
-        /** The thread id. */
-        ThreadID tid;
+          /** The ld instrction */
+          const StaticInstPtr inst;
+      };
 
-        /** Whether or not it was predicted taken. */
-        bool predPredictible;
+      typedef std::deque<PredictorHistory> History;
 
-        /** Whether or not the RAS was used. */
-        bool usedRAS = false;
+      /** Number of the threads for which the branch history is maintained. */
+      const unsigned numThreads;
 
-        /* Whether or not the RAS was pushed */
-        bool pushedRAS = false;
+      /**
+       * The per-thread predictor history. This is used to update the predictor
+       * as instructions are committed, or restore it to the proper state after
+       * a squash.
+       */
+      std::vector<History> predHist;
 
-        /** Whether or not the instruction was a call. */
-        bool wasCall = false;
+      /** The LVPT. */
+      DefaultLVPT LVPT;
 
-        /** Whether or not the instruction was a return. */
-        bool wasReturn = false;
+      struct LVPredUnitStats : public statistics::Group
+      {
+          LVPredUnitStats(statistics::Group *parent);
 
-        /** Wether this instruction was an indirect branch */
-        bool wasIndirect = false;
+          /** Stat for number of LVP lookups. */
+          statistics::Scalar lookups;
+          /** Stat for number of lds predicted. */
+          statistics::Scalar ldvalPredicted;
+          /** Stat for number of lds predicted incorrectly. */
+          statistics::Scalar ldvalIncorrect;
+          /** Stat for number of LVPT lookups. */
+          statistics::Scalar LVPTLookups;
+          /** Stat for number of LVPT hits. */
+          statistics::Scalar LVPTHits;
+          /** Stat for the ratio between LVPT hits and LVPT lookups. */
+          statistics::Formula LVPTHitRatio;
 
-        /** Target of the branch. First it is predicted, and fixed later
-         *  if necessary
-         */
-        Addr target = MaxAddr;
-
-        /** The branch instrction */
-        const StaticInstPtr inst;
-    };
-
-    typedef std::deque<PredictorHistory> History;
-
-    /** Number of the threads for which the branch history is maintained. */
-    const unsigned numThreads;
-
-
-    /**
-     * The per-thread predictor history. This is used to update the predictor
-     * as instructions are committed, or restore it to the proper state after
-     * a squash.
-     */
-    std::vector<History> predHist;
-
-    /** The BTB. */
-    DefaultBTB LVPT;
-
-    /** The per-thread return address stack. */
-    std::vector<ReturnAddrStack> RAS;
-
-    /** The indirect target predictor. */
-    IndirectPredictor * iPred;
-
-    struct BPredUnitStats : public statistics::Group
-    {
-        BPredUnitStats(statistics::Group *parent);
-
-        /** Stat for number of BP lookups. */
-        statistics::Scalar lookups;
-        /** Stat for number of conditional branches predicted. */
-        statistics::Scalar condPredicted;
-        /** Stat for number of conditional branches predicted incorrectly. */
-        statistics::Scalar condIncorrect;
-        /** Stat for number of BTB lookups. */
-        statistics::Scalar LVPTLookups;
-        /** Stat for number of BTB hits. */
-        statistics::Scalar LVPTHits;
-        /** Stat for the ratio between BTB hits and BTB lookups. */
-        statistics::Formula BTBHitRatio;
-        /** Stat for number of times the RAS is used to get a target. */
-        statistics::Scalar RASUsed;
-        /** Stat for number of times the RAS is incorrect. */
-        statistics::Scalar RASIncorrect;
-
-        /** Stat for the number of indirect target lookups.*/
-        statistics::Scalar indirectLookups;
-        /** Stat for the number of indirect target hits.*/
-        statistics::Scalar indirectHits;
-        /** Stat for the number of indirect target misses.*/
-        statistics::Scalar indirectMisses;
-        /** Stat for the number of indirect target mispredictions.*/
-        statistics::Scalar indirectMispredicted;
-    } stats;
+      } stats;
 
   protected:
     /** Number of bits to shift instructions by for predictor addresses. */

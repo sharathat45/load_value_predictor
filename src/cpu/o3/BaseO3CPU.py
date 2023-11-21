@@ -172,9 +172,9 @@ class BaseO3CPU(BaseCPU):
     needsTSO = Param.Bool(False, "Enable TSO Memory model")
 
     
-    lctSize = Param.Unsigned(1024, "Size of LCT entries")
+    lctSize = Param.Unsigned(2048, "Size of LCT entries in bits")
     lctCtrBits = Param.Unsigned(2, "Bits per counter")
     numThreads = Param.Unsigned(Parent.numThreads, "Number of threads")
-    LVPTEntries = Param.Unsigned(4096, "Number of LVPT entries")
+    LVPTEntries = Param.Unsigned(1024, "Number of LVPT entries")
     LVPTTagSize = Param.Unsigned(16, "Size of the LVPT tags, in bits")
     instShiftAmt = Param.Unsigned(2, "Number of bits to shift instructions by")
