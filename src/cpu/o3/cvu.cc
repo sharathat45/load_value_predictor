@@ -71,9 +71,9 @@ unsigned
 CVU::getIndex(Addr instPC, ThreadID tid)
 {
     // Need to shift PC over by the word offset.
-    return ((instPC >> instShiftAmt)
-            ^ (tid << (tagShiftAmt - instShiftAmt - log2NumThreads)))
-            & idxMask;
+    return ((instPC >> instShiftAmt) & idxMask);
+            //^ (tid << (tagShiftAmt - instShiftAmt - log2NumThreads)))
+            
 }
 
 // LRU
@@ -102,8 +102,8 @@ CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
 
     for (unsigned i = 0;i < numEntries; ++i){
         if (cvu_table[i].valid
-            && LwdataAddr == cvu_table[i].data_addr,
-            && instr_idx == cvu_table[i].instr_idx,
+            && LwdataAddr == cvu_table[i].data_addr
+            && instr_idx == cvu_table[i].instr_idx
             && cvu_table[i].tid == tid){
                 reference_update(i);
                 return i;
@@ -127,8 +127,8 @@ CVU::invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid)
     
     for (unsigned i = 0;i < numEntries; ++i){
         if (cvu_table[i].valid
-            && LwdataAddr == cvu_table[i].data_addr,
-            && instr_idx == cvu_table[i].instr_idx,
+            && LwdataAddr == cvu_table[i].data_addr
+            && instr_idx == cvu_table[i].instr_idx
             && cvu_table[i].tid == tid){
                 cvu_table[i].valid = false;
                 cvu_table[i].data_addr = 0;
@@ -146,7 +146,7 @@ CVU::invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid)
 
 // should only be called after the valid function
 // if the corresponding entry is valid
-const RegVal
+RegVal
 CVU::lookup(int index, ThreadID tid)
 {   
     assert((index >= 0) && (index < numEntries));
@@ -162,7 +162,8 @@ CVU::replacement(unsigned instr_idx, Addr data_addr, RegVal data, ThreadID tid)
     unsigned char LRU = 0xff;
     unsigned LRU_idx = 0;
     RegVal old_data_addr;
-
+    
+    // More efficient way?
     for (unsigned i = 0;i < numEntries; i++){
         if (cvu_table[i].reference < LRU) {
             LRU = cvu_table[i].reference;
@@ -179,9 +180,9 @@ CVU::replacement(unsigned instr_idx, Addr data_addr, RegVal data, ThreadID tid)
     cvu_table[LRU_idx].reference = 0;
     reference_update(LRU_idx);
 
-    //DPRINTF(LVPTunit, "CVU LRU replacement table entry [%d]: %d -> %d", LRU_idx, old_data_addr, data_addr);
+    //DPRINTF(LVPUnit, "CVU LRU replacement table entry [%d]: %d -> %d", LRU_idx, old_data_addr, data_addr);
 
-    return LRU_idx;
+    return;
 }
 
 void
@@ -193,7 +194,7 @@ CVU::update(Addr instPc, Addr data_addr, RegVal data, ThreadID tid)
     
     for (unsigned i = 0; i < numEntries; ++i) {
         if (cvu_table[i].valid == false) {
-            cvu_table[i].instr_index = instr_idx;
+            cvu_table[i].instr_idx = instr_idx;
             cvu_table[i].data_addr = data_addr;
             cvu_table[i].data = data;
             cvu_table[i].tid = tid;

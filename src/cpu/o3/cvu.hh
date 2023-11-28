@@ -46,7 +46,7 @@ class CVU
     struct CVUEntry
     {
         /** The entry's tag. */
-        Addr instr_index = 0;
+        unsigned instr_idx = 0;
         Addr data_addr = 0;
         
         /** The entry's thread id. */
@@ -77,7 +77,7 @@ class CVU
      *  @param index Index returned from the valid function
      *  @return The value the load instruction should get
      */
-    const RegVal lookup(int index, ThreadID tid);
+    RegVal lookup(int index, ThreadID tid);
 
     /** Checks if a branch is in the CVU.
      *  @param inst_PC The address of the load to look up.
@@ -99,10 +99,11 @@ class CVU
     // return true if a matching entry was found
     bool invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid);
 
-    // replace the LRU entry
+    // replace the LRU entry, should be called if the table is full
     void replacement(unsigned instr_idx, Addr data_addr, RegVal data, ThreadID tid);
 
-    // keep track of the LRU
+    // keep track of the LRU, should be called everytime
+    // an entry is referenced
     void reference_update(int index);
 
   private:
