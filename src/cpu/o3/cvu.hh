@@ -68,24 +68,18 @@ class CVU
      *  @param tagBits Number of bits for each tag in the CVU.
      *  @param instShiftAmt Offset amount for instructions to ignore alignment.
      */
-    CVU(unsigned numEntries, unsigned indexBits,
+    CVU(unsigned numEntries, unsigned LVPTnumEntries,
                unsigned instShiftAmt, unsigned numThreads);
 
     void reset();
 
-    /** Looks up an address in the CVU table. Must call valid() first on the address.
-     *  @param index Index returned from the valid function
-     *  @return The value the load instruction should get
-     */
-    RegVal lookup(int index, ThreadID tid);
-
-    /** Checks if a branch is in the CVU.
+    /** Checks if a LVPT entry is in the CVU.
      *  @param inst_PC The address of the load to look up.
      *  @param LwdataAddr The address of the load data.
      *  @param tid The thread id.
      *  @return index of the entry if the entry found in 
      */
-    int valid(Addr instPC, Addr LwdataAddr, ThreadID tid);
+    bool valid(Addr instPC, Addr LwdataAddr, ThreadID tid);
 
     /** Updates the CVU entry.
      *  @param instPc The address of the ld instruction being updated.
@@ -95,7 +89,7 @@ class CVU
      */
     void update(Addr instPc, Addr data_addr, RegVal data, ThreadID tid);
 
-    // invalidate the corresponding entry
+    // invalidate the corresponding entry, call upon a store instruction
     // return true if a matching entry was found
     bool invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid);
 
@@ -126,7 +120,7 @@ class CVU
     /* set reference bit */
     unsigned char reference_bit = 0x80; // 0x1000 0000
     /* Number of bits for index used in the LVPT*/
-    unsigned indexBits;
+    unsigned LVPTnumEntries;
 
     /** Number of bits to shift PC when calculating index. */
     unsigned instShiftAmt;

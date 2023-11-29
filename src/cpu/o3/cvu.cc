@@ -30,7 +30,7 @@
 
 #include "base/intmath.hh"
 #include "base/trace.hh"
-#include "debug/Fetch.hh"
+#include "debug/LVPUnit.hh"
 
 namespace gem5
 {
@@ -39,15 +39,14 @@ namespace o3
 {
 
 CVU::CVU(unsigned _numEntries,
-                       unsigned _indexBits,
+                       unsigned _lvptnumentries,
                        unsigned _instShiftAmt,
                        unsigned _num_threads)
     : numEntries(_numEntries),
-      indexBits(_indexBits),
+      LVPTnumEntries(_lvptnumentries),
       instShiftAmt(_instShiftAmt)
 {
-    DPRINTF(Fetch, "CVU: Creating CVU object.\n");
-
+    DPRINTF(LVPUnit, "CVU: Creating CVU object.\n");
     
     cvu_table.resize(numEntries);
 
@@ -55,7 +54,7 @@ CVU::CVU(unsigned _numEntries,
         cvu_table[i].valid = false;
     }
 
-    idxMask = (1 << indexBits) - 1;
+    idxMask = LVPTnumEntries - 1;
 }
 
 void
@@ -91,9 +90,8 @@ CVU::reference_update(int index)
 
 // If LCT Predict Constant, call this function to check if CVU
 // already contained the corresponding entry
-// return the index of the entry in the table if entry was found
-// else return -1
-int
+// return the True if present, false if not
+bool
 CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
 {
     unsigned instr_idx = getIndex(instPC, tid);
@@ -105,13 +103,14 @@ CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
             && LwdataAddr == cvu_table[i].data_addr
             && instr_idx == cvu_table[i].instr_idx
             && cvu_table[i].tid == tid){
+                //DPRINTF(LVPUnit, "Valid Entry found in CVU[%d]",i);
                 reference_update(i);
-                return i;
+                return true;
             }
 
     }
 
-    return -1;
+    return false;
 }
 
 
@@ -127,12 +126,9 @@ CVU::invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid)
     
     for (unsigned i = 0;i < numEntries; ++i){
         if (cvu_table[i].valid
-            && LwdataAddr == cvu_table[i].data_addr
-            && instr_idx == cvu_table[i].instr_idx
-            && cvu_table[i].tid == tid){
+            && LwdataAddr == cvu_table[i].data_addr) {
                 cvu_table[i].valid = false;
                 cvu_table[i].data_addr = 0;
-                cvu_table[i].data = 0;
                 cvu_table[i].instr_idx = 0;
                 cvu_table[i].reference = 0;
                 cvu_table[i].tid = 0;
@@ -142,17 +138,6 @@ CVU::invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid)
 
     return false;
     
-}
-
-// should only be called after the valid function
-// if the corresponding entry is valid
-RegVal
-CVU::lookup(int index, ThreadID tid)
-{   
-    assert((index >= 0) && (index < numEntries));
-    assert(cvu_table[index].valid);
-
-    return cvu_table[index].data;
 }
 
 // 
@@ -175,7 +160,6 @@ CVU::replacement(unsigned instr_idx, Addr data_addr, RegVal data, ThreadID tid)
     cvu_table[LRU_idx].valid = true;
     cvu_table[LRU_idx].data_addr = data_addr;
     cvu_table[LRU_idx].instr_idx = instr_idx;
-    cvu_table[LRU_idx].data = data;
     cvu_table[LRU_idx].tid = tid;
     cvu_table[LRU_idx].reference = 0;
     reference_update(LRU_idx);
@@ -196,7 +180,6 @@ CVU::update(Addr instPc, Addr data_addr, RegVal data, ThreadID tid)
         if (cvu_table[i].valid == false) {
             cvu_table[i].instr_idx = instr_idx;
             cvu_table[i].data_addr = data_addr;
-            cvu_table[i].data = data;
             cvu_table[i].tid = tid;
             cvu_table[i].valid = true;
             reference_update(i);
