@@ -16,17 +16,21 @@ namespace o3
 
 LVPUnit::LVPUnit(const BaseO3CPUParams &params)
     : numThreads(params.numThreads),
-      predHist(numThreads),
-      LVPT(params.LVPTEntries,
-          params.LVPTTagSize,
-          params.instShiftAmt,
-          params.numThreads),
-      CVU(params.CVUnumEntries,
-      params.LVPTEntries, // for creating LVPT index
-      params.instShiftAmt,
-      params.numThreads),
-      stats(this),
-      instShiftAmt(params.instShiftAmt)
+        predHist(numThreads),
+        instShiftAmt(params.instShiftAmt),
+        lct(params.LCTEntries,
+            params.LCTCtrBits,
+            instShiftAmt,
+            params.numThreads),
+        lvpt(params.LVPTEntries,
+            params.LVPTTagSize,
+            instShiftAmt,
+            params.numThreads),
+        cvu(params.CVUnumEntries,
+            params.LVPTEntries, // for creating LVPT index
+            instShiftAmt,
+            params.numThreads),
+        stats(this)
 {}
 
 
@@ -35,53 +39,66 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVa
     // See if LCT predicts predictible.
     // If so, get its value from LVPT.
 
-    bool pred_predictible_ld = false;
-
-    std::unique_ptr<RegVal> ldval(ld_Value.clone()); // should be load value
-
-    ++stats.lookups;
-
-    void *ld_history = NULL;
-    void *indirect_history = NULL;
-
-    if (inst->isLoad())
-    {
-        ++stats.condPredicted;
-        pred_predictible_ld = lookup(tid, pc.instAddr(), ld_history);
-
-        DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVP predicted %i for PC %s\n", tid, seqNum,  pred_predictible_ld, pc);
-    }
+    ++stats.LCTLookups;
+    uint8_t counter_val = lct.lookup(tid, pc.instAddr());
+    bool is_predictible_ld = lct.getPrediction(counter_val);
     
-    DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Creating prediction history for PC %s\n", tid, seqNum, pc);
-    PredictorHistory predict_record(seqNum, pc.instAddr(), pred_predictible_ld, ld_history, tid, inst);
-
-    // Now lookup in the LVPT if its predictible or constant.
-    if (pred_predictible_ld) {
+    if (!is_predictible_ld) 
+    {
+        DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted not predictible for PC %s\n", tid, seqNum, pc);
+        return false;
+    }
+    else
+    {
+        DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted predictible for PC %s\n", tid, seqNum, pc);
 
         ++stats.LVPTLookups;
-        // Check LVPT on ld
-        if (LVPT.valid(pc.instAddr(), tid)) {
-            ++stats.LVPTHits;
-
-            // use the LVPT to get ld value.
-            set(ldval, LVPT.lookup(pc.instAddr(), tid));
-            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Instruction %s predicted ld value is %s\n", tid, seqNum, pc, *ldval);
-        } 
-        else 
+        if (lvpt.valid(pc.instAddr(), tid))
         {
-            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT doesn't have a valid entry\n", tid, seqNum);
-            pred_predictible_ld = false;
-            predict_record.predPredictible = pred_predictible_ld;
-            
-            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPTUpdate called for %s\n", tid, seqNum, pc);
+            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT has valid entry for PC %s\n", tid, seqNum, pc);
+            ld_Value = lvpt.lookup(pc.instAddr(), tid);
+            return true;
+        }
+        else
+        {
+            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT doesn't have valid entry for PC %s\n", tid, seqNum, pc);
+            return false;
         }
     }
+    return is_predictible_ld;
 
-    // predict_record.ldval = ldval->instAddr();
+    // std::unique_ptr<RegVal> ldval(ld_Value.clone()); // should be load value
+    // set(ldval, LVPT.lookup(pc.instAddr(), tid));
 
-    predHist[tid].push_front(predict_record);
-    DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
-    return pred_predictible_ld;
+    // DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Creating prediction history buffer entry for PC %s\n", tid, seqNum, pc);
+    // PredictorHistory predict_record(seqNum, pc.instAddr(), pred_predictible_ld, ld_history, tid, inst);
+
+    // // Now lookup in the LVPT if its predictible or constant.
+    // if (pred_predictible_ld) {
+
+       
+    //     // Check LVPT on ld
+    //     if (LVPT.valid(pc.instAddr(), tid)) {
+    //         ++stats.LVPTHits;
+
+    //         // use the LVPT to get ld value.
+    //         set(ldval, LVPT.lookup(pc.instAddr(), tid));
+    //         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Instruction %s predicted ld value is %s\n", tid, seqNum, pc, *ldval);
+    //     } 
+    //     else 
+    //     {
+    //         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT doesn't have a valid entry\n", tid, seqNum);
+    //         pred_predictible_ld = false;
+    //         predict_record.predPredictible = pred_predictible_ld;
+            
+    //         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPTUpdate called for %s\n", tid, seqNum, pc);
+    //     }
+    // }
+
+    // // predict_record.ldval = ldval->instAddr();
+
+    // predHist[tid].push_front(predict_record);
+    // DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
 }
 
 void LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
@@ -90,7 +107,7 @@ void LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
 
     while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
         // Update the LCT with the correct results.
-        update(tid, predHist[tid].back().pc,
+        lct.update(tid, predHist[tid].back().pc,
                predHist[tid].back().predPredictible,
                predHist[tid].back().ldHistory, false,
                predHist[tid].back().inst,
@@ -99,7 +116,7 @@ void LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
         // The Direction of the LCT is altered because the LVPT did not have an entry
         // The LVPT needs to be updated accordingly, LCT default is don't predict
 
-        lvptUpdate(tid, pc.instAddr(), ld_history);
+        lvpt.update(tid, pc.instAddr(), ld_history);
         
         predHist[tid].pop_back();
     }

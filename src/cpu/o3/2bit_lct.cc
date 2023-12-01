@@ -14,7 +14,7 @@ namespace o3
 LCT::LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsigned _numThreads)
     : lctSize(_lctSize),
       lctCtrBits(_lctCtrBits),
-      lctPredictorSets(lctSize / lctCtrBits),
+      lctPredictorSets(lctSize),
       lctCtrs(lctPredictorSets, SatCounter8(lctCtrBits)),
       indexMask(lctPredictorSets - 1)
 {
@@ -35,13 +35,7 @@ LCT::LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsign
     DPRINTF(LVPUnit, "instruction shift amount: %i\n", instShiftAmt); 
 }
 
-void LCT::lvptUpdate(ThreadID tid, Addr ld_addr, void *&ld_history)
-{
-    // Place holder for a function that is called to update predictor history when
-    // a lvptUpdate entry is invalid or not found.
-}
-
-bool LCT::lookup(ThreadID tid, Addr ld_addr, void *&ld_history)
+uint8_t LCT::lookup(ThreadID tid, Addr ld_addr)
 {
     bool predictible;
     unsigned lct_idx = getLocalIndex(ld_addr);
@@ -50,14 +44,18 @@ bool LCT::lookup(ThreadID tid, Addr ld_addr, void *&ld_history)
 
     uint8_t counter_val = lctCtrs[lct_idx];
 
-    DPRINTF(LVPUnit, "prediction is %i.\n", (int)counter_val); 
-
-    predictible = getPrediction(counter_val);
-
-    return predictible;
+    return counter_val;
 }
 
-void LCT:: update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history, bool squashed, const StaticInstPtr & inst, Addr ldval)
+bool LCT::getPrediction(uint8_t &count)
+{
+    DPRINTF(LVPUnit, "prediction is %i.\n", (int)counter_val);
+
+    // Get the MSB of the count
+    return (count >> (lctCtrBits - 1));
+}
+
+void LCT:: update(ThreadID tid, Addr ld_addr, bool prediction_outcome, void *ld_history, bool squashed)
 {
     assert(ld_history == NULL);
     unsigned lct_idx;
@@ -72,7 +70,7 @@ void LCT:: update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history
 
     DPRINTF(LVPUnit, "Looking up index %#x\n", lct_idx);
 
-    if (predictible)
+    if (prediction_outcome)
     {
         DPRINTF(LVPUnit, "ld ins address updated as predictible.\n");
         lctCtrs[lct_idx]++;
@@ -82,12 +80,6 @@ void LCT:: update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history
         DPRINTF(LVPUnit, "ld ins address updated as not predictible.\n");
         lctCtrs[lct_idx]--;
     }
-}
-
-inline bool LCT::getPrediction(uint8_t &count)
-{
-    // Get the MSB of the count
-    return (count >> (lctCtrBits - 1));
 }
 
 inline unsigned LCT::getLocalIndex(Addr &ld_addr)

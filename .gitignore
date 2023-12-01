@@ -1,4 +1,5 @@
 --maxinsts=10000000
+search.log
 pipeview.out
 last_command
 build

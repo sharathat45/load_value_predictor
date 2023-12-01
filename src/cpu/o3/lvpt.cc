@@ -10,9 +10,7 @@ namespace gem5
 namespace o3
 {
 
-LVPT::LVPT(unsigned _numEntries,
-           unsigned _shiftAmt,
-           unsigned _numThreads)
+LVPT::LVPT(unsigned _numEntries, unsigned _shiftAmt, unsigned _numThreads)
     : numEntries(_numEntries),
       shiftAmt(_shiftAmt),
       log2NumThreads(floorLog2(_numThreads))
@@ -32,8 +30,7 @@ LVPT::LVPT(unsigned _numEntries,
     idxMask = numEntries - 1;
 }
 
-void
-LVPT::reset()
+void LVPT::reset()
 {
     DPRINTF(LVPUnit, "LVPT reset.\n");
     for (unsigned i = 0; i < numEntries; ++i) {
@@ -41,16 +38,13 @@ LVPT::reset()
     }
 }
 
-inline
-unsigned
-LVPT::getIndex(Addr loadAddr, ThreadID tid)
+inline unsigned LVPT::getIndex(Addr loadAddr, ThreadID tid)
 {
     // Need to shift load address over by the word offset.
     return (loadAddr >> shiftAmt) & idxMask;
 }
 
-bool
-LVPT::valid(Addr loadAddr, ThreadID tid)
+bool LVPT::valid(Addr loadAddr, ThreadID tid)
 {
     unsigned lvpt_idx = getIndex(loadAddr, tid);
 
@@ -63,8 +57,7 @@ LVPT::valid(Addr loadAddr, ThreadID tid)
     }
 }
 
-RegVal
-LVPT::lookup(Addr loadAddr, ThreadID tid)
+RegVal LVPT::lookup(Addr loadAddr, ThreadID tid)
 {
     unsigned lvpt_idx = getIndex(loadAddr, tid);
 
@@ -83,8 +76,7 @@ LVPT::lookup(Addr loadAddr, ThreadID tid)
     }
 }
 
-void
-LVPT::update(Addr loadAddr, RegVal loadValue, ThreadID tid)
+void LVPT::update(Addr loadAddr, RegVal loadValue, ThreadID tid)
 {
     unsigned lvpt_idx = getIndex(loadAddr, tid);
 
