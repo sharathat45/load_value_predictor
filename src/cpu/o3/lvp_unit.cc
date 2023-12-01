@@ -16,12 +16,17 @@ namespace o3
 
 LVPUnit::LVPUnit(const BaseO3CPUParams &params)
     : numThreads(params.numThreads),
-        predHist(numThreads),
-        lct(params.lctSize, params.lctCtrBits, params.instShiftAmt, params.numThreads),
-        lvpt(params.LVPTEntries, params.LVPTTagSize, params.instShiftAmt, params.numThreads),
-        cvu(params.CVTEntries, params.CVTTagSize, params.instShiftAmt, params.numThreads), // add needed params to CVT
-        stats(this),
-        instShiftAmt(params.instShiftAmt)
+      predHist(numThreads),
+      LVPT(params.LVPTEntries,
+          params.LVPTTagSize,
+          params.instShiftAmt,
+          params.numThreads),
+      CVU(params.CVUnumEntries,
+      params.LVPTEntries, // for creating LVPT index
+      params.instShiftAmt,
+      params.numThreads),
+      stats(this),
+      instShiftAmt(params.instShiftAmt)
 {}
 
 

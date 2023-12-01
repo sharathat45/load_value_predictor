@@ -178,3 +178,4 @@ class BaseO3CPU(BaseCPU):
     LVPTEntries = Param.Unsigned(1024, "Number of LVPT entries")
     LVPTTagSize = Param.Unsigned(16, "Size of the LVPT tags, in bits")
     instShiftAmt = Param.Unsigned(2, "Number of bits to shift instructions by")
+    CVUnumEntries = Param.Unsigned(256, "Number of CVU entries")
