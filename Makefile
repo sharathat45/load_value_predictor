@@ -23,7 +23,7 @@ ifeq ($(DEBUG), 1)
 	DEBUG_FLAGS = --debug-flags=$(DEBUG_CLASS) --debug-file=trace.out
 endif
 
-.PHONY: run clean build patch benchmark hello hello_debug run_debug debug sjeng lbm milc astar leslie3d namd sjeng_debug lbm_debug milc_debug astar_debug leslie3d_debug namd_debug
+.PHONY: run clean build patch benchmark hello debug sjeng lbm milc astar leslie3d namd 
 
 $(EXECUTABLE): $(SRC_C)
 	$(CC) $(SRC_C) -o $(EXECUTABLE) -lm5

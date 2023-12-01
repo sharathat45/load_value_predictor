@@ -3,17 +3,17 @@
 #include "base/intmath.hh"
 #include "base/logging.hh"
 #include "base/trace.hh"
-#include "debug/Branch.hh"
+#include "debug/LVPUnit.hh"
 
 namespace gem5
 {
 
 namespace o3
 {
-
-LCT::LCT(const BaseO3CPUParams &params)
-    : lctSize(params.lctSize),
-      lctCtrBits(params.lctCtrBits),
+         
+LCT::LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsigned _numThreads)
+    : lctSize(_lctSize),
+      lctCtrBits(_lctCtrBits),
       lctPredictorSets(lctSize / lctCtrBits),
       lctCtrs(lctPredictorSets, SatCounter8(lctCtrBits)),
       indexMask(lctPredictorSets - 1)
@@ -26,13 +26,13 @@ LCT::LCT(const BaseO3CPUParams &params)
         fatal("Invalid number of LCT predictor sets! Check lctCtrBits.\n");
     }
 
-    DPRINTF(Branch, "index mask: %#x\n", indexMask); 
+    DPRINTF(LVPUnit, "index mask: %#x\n", indexMask); 
 
-    DPRINTF(Branch, "local predictor size: %i\n", lctSize); 
+    DPRINTF(LVPUnit, "local predictor size: %i\n", lctSize); 
 
-    DPRINTF(Branch, "local counter bits: %i\n", lctCtrBits); 
+    DPRINTF(LVPUnit, "local counter bits: %i\n", lctCtrBits); 
 
-    DPRINTF(Branch, "instruction shift amount: %i\n", instShiftAmt); 
+    DPRINTF(LVPUnit, "instruction shift amount: %i\n", instShiftAmt); 
 }
 
 void LCT::lvptUpdate(ThreadID tid, Addr ld_addr, void *&ld_history)
@@ -46,11 +46,11 @@ bool LCT::lookup(ThreadID tid, Addr ld_addr, void *&ld_history)
     bool predictible;
     unsigned lct_idx = getLocalIndex(ld_addr);
 
-    DPRINTF(Branch, "Looking up index %#x\n", lct_idx); 
+    DPRINTF(LVPUnit, "Looking up index %#x\n", lct_idx); 
 
     uint8_t counter_val = lctCtrs[lct_idx];
 
-    DPRINTF(Branch, "prediction is %i.\n", (int)counter_val); 
+    DPRINTF(LVPUnit, "prediction is %i.\n", (int)counter_val); 
 
     predictible = getPrediction(counter_val);
 
@@ -70,16 +70,16 @@ void LCT:: update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history
     // Update the local predictor.
     lct_idx = getLocalIndex(ld_addr);
 
-    DPRINTF(Branch, "Looking up index %#x\n", lct_idx);
+    DPRINTF(LVPUnit, "Looking up index %#x\n", lct_idx);
 
     if (predictible)
     {
-        DPRINTF(Branch, "ld ins address updated as predictible.\n");
+        DPRINTF(LVPUnit, "ld ins address updated as predictible.\n");
         lctCtrs[lct_idx]++;
     }
     else
     {
-        DPRINTF(Branch, "ld ins address updated as not predictible.\n");
+        DPRINTF(LVPUnit, "ld ins address updated as not predictible.\n");
         lctCtrs[lct_idx]--;
     }
 }

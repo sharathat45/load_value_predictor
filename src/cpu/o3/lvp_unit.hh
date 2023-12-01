@@ -196,7 +196,13 @@ class LVPUnit : public SimObject
       std::vector<History> predHist;
 
       /** The LVPT. */
-      DefaultLVPT LVPT;
+      LVPT lvpt;
+
+      /** The LCT */
+      LCT lct;
+
+      /** The CVU */
+      CVU cvu;
 
       struct LVPredUnitStats : public statistics::Group
       {

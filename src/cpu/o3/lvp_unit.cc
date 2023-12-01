@@ -6,7 +6,7 @@
 #include "base/compiler.hh"
 #include "base/trace.hh"
 #include "config/the_isa.hh"
-#include "debug/Branch.hh"
+#include "debug/LVPUnit.hh"
 
 namespace gem5
 {
@@ -16,13 +16,12 @@ namespace o3
 
 LVPUnit::LVPUnit(const BaseO3CPUParams &params)
     : numThreads(params.numThreads),
-      predHist(numThreads),
-      LVPT(params.LVPTEntries,
-          params.LVPTTagSize,
-          params.instShiftAmt,
-          params.numThreads),
-      stats(this),
-      instShiftAmt(params.instShiftAmt)
+        predHist(numThreads),
+        lct(params.lctSize, params.lctCtrBits, params.instShiftAmt, params.numThreads),
+        lvpt(params.LVPTEntries, params.LVPTTagSize, params.instShiftAmt, params.numThreads),
+        cvu(params.CVTEntries, params.CVTTagSize, params.instShiftAmt, params.numThreads), // add needed params to CVT
+        stats(this),
+        instShiftAmt(params.instShiftAmt)
 {}
 
 
@@ -45,10 +44,10 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVa
         ++stats.condPredicted;
         pred_predictible_ld = lookup(tid, pc.instAddr(), ld_history);
 
-        DPRINTF(Branch, "[tid:%i] [sn:%llu] LVP predicted %i for PC %s\n", tid, seqNum,  pred_predictible_ld, pc);
+        DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVP predicted %i for PC %s\n", tid, seqNum,  pred_predictible_ld, pc);
     }
     
-    DPRINTF(Branch, "[tid:%i] [sn:%llu] Creating prediction history for PC %s\n", tid, seqNum, pc);
+    DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Creating prediction history for PC %s\n", tid, seqNum, pc);
     PredictorHistory predict_record(seqNum, pc.instAddr(), pred_predictible_ld, ld_history, tid, inst);
 
     // Now lookup in the LVPT if its predictible or constant.
@@ -61,28 +60,28 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVa
 
             // use the LVPT to get ld value.
             set(ldval, LVPT.lookup(pc.instAddr(), tid));
-            DPRINTF(Branch, "[tid:%i] [sn:%llu] Instruction %s predicted ld value is %s\n", tid, seqNum, pc, *ldval);
+            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Instruction %s predicted ld value is %s\n", tid, seqNum, pc, *ldval);
         } 
         else 
         {
-            DPRINTF(Branch, "[tid:%i] [sn:%llu] LVPT doesn't have a valid entry\n", tid, seqNum);
+            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT doesn't have a valid entry\n", tid, seqNum);
             pred_predictible_ld = false;
             predict_record.predPredictible = pred_predictible_ld;
             
-            DPRINTF(Branch, "[tid:%i] [sn:%llu] LVPTUpdate called for %s\n", tid, seqNum, pc);
+            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPTUpdate called for %s\n", tid, seqNum, pc);
         }
     }
 
     // predict_record.ldval = ldval->instAddr();
 
     predHist[tid].push_front(predict_record);
-    DPRINTF(Branch, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
+    DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
     return pred_predictible_ld;
 }
 
 void LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
 {
-    DPRINTF(Branch, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
+    DPRINTF(LVPUnit, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
 
     while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
         // Update the LCT with the correct results.
@@ -146,11 +145,11 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, ThreadID tid)
         // This call should delete the ldHistory.
         squash(tid, pred_hist.front().ldHistory);
 
-        DPRINTF(Branch, "[tid:%i] [squash sn:%llu] Removing history for [sn:%llu] PC %#x\n", tid, squashed_sn, pred_hist.front().seqNum, pred_hist.front().pc);
+        DPRINTF(LVPUnit, "[tid:%i] [squash sn:%llu] Removing history for [sn:%llu] PC %#x\n", tid, squashed_sn, pred_hist.front().seqNum, pred_hist.front().pc);
 
         pred_hist.pop_front();
 
-        DPRINTF(Branch, "[tid:%i] [squash sn:%llu] predHist.size(): %i\n", tid, squashed_sn, predHist[tid].size());
+        DPRINTF(LVPUnit, "[tid:%i] [squash sn:%llu] predHist.size(): %i\n", tid, squashed_sn, predHist[tid].size());
     }
 }
 
@@ -171,7 +170,7 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bo
 
     ++stats.ldvalIncorrect;
 
-    DPRINTF(Branch, "[tid:%i] Squashing from sequence number %i, setting target to %s\n", tid, squashed_sn, corr_target);
+    DPRINTF(LVPUnit, "[tid:%i] Squashing from sequence number %i, setting target to %s\n", tid, squashed_sn, corr_target);
 
     // Squash All Branches AFTER this mispredicted branch
     squash(squashed_sn, tid);
@@ -187,7 +186,7 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bo
 
         //assert(hist_it != pred_hist.end());
         if (pred_hist.front().seqNum != squashed_sn) {
-            DPRINTF(Branch, "Front sn %i != Squash sn %i\n",
+            DPRINTF(LVPUnit, "Front sn %i != Squash sn %i\n",
                     pred_hist.front().seqNum, squashed_sn);
 
             assert(pred_hist.front().seqNum == squashed_sn);
@@ -196,7 +195,7 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bo
 
         if ((*hist_it).usedRAS) {
             ++stats.RASIncorrect;
-            DPRINTF(Branch,
+            DPRINTF(LVPUnit,
                     "[tid:%i] [squash sn:%llu] Incorrect RAS [sn:%llu]\n",
                     tid, squashed_sn, hist_it->seqNum);
         }
@@ -225,7 +224,7 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bo
 
         if (actually_taken) {
             if (hist_it->wasReturn && !hist_it->usedRAS) {
-                 DPRINTF(Branch, "[tid:%i] [squash sn:%llu] "
+                 DPRINTF(LVPUnit, "[tid:%i] [squash sn:%llu] "
                         "Incorrectly predicted "
                         "return [sn:%llu] PC: %#x\n", tid, squashed_sn,
                         hist_it->seqNum,
@@ -241,7 +240,7 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bo
                         corr_target, tid);
                 }
             } else {
-                DPRINTF(Branch,"[tid:%i] [squash sn:%llu] "
+                DPRINTF(LVPUnit,"[tid:%i] [squash sn:%llu] "
                         "BTB Update called for [sn:%llu] "
                         "PC %#x\n", tid, squashed_sn,
                         hist_it->seqNum, hist_it->pc);
@@ -251,12 +250,12 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bo
         } else {
            //Actually not Taken
            if (hist_it->usedRAS) {
-                DPRINTF(Branch,
+                DPRINTF(LVPUnit,
                         "[tid:%i] [squash sn:%llu] Incorrectly predicted "
                         "return [sn:%llu] PC: %#x Restoring RAS\n", tid,
                         squashed_sn,
                         hist_it->seqNum, hist_it->pc);
-                DPRINTF(Branch,
+                DPRINTF(LVPUnit,
                         "[tid:%i] [squash sn:%llu] Restoring top of RAS "
                         "to: %i, target: %s\n", tid, squashed_sn,
                         hist_it->RASIndex, *hist_it->RASTarget);
@@ -264,7 +263,7 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bo
                 hist_it->usedRAS = false;
            } else if (hist_it->wasCall && hist_it->pushedRAS) {
                  //Was a Call but predicated false. Pop RAS here
-                 DPRINTF(Branch,
+                 DPRINTF(LVPUnit,
                         "[tid:%i] [squash sn:%llu] "
                         "Incorrectly predicted "
                         "Call [sn:%llu] PC: %s Popping RAS\n",
@@ -275,7 +274,7 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bo
            }
         }
     } else {
-        DPRINTF(Branch, "[tid:%i] [sn:%llu] pred_hist empty, can't "
+        DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] pred_hist empty, can't "
                 "update\n", tid, squashed_sn);
     }
 }
