@@ -23,7 +23,6 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
             instShiftAmt,
             params.numThreads),
         lvpt(params.LVPTEntries,
-            params.LVPTTagSize,
             instShiftAmt,
             params.numThreads),
         cvu(params.CVUnumEntries,
@@ -46,11 +45,16 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVa
     
     if (!is_predictible_ld) 
     {
+        // inst -> setLdPredictible(false)
+        // inst -> setLdConstant(false)
         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted not predictible for PC %s\n", tid, seqNum, pc);
         return false;
     }
     else
-    {
+    {   
+        // inst -> setLdPredictible(false)
+        // inst -> setLdPredictible(counter_val == 3)
+    
         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted predictible for PC %s\n", tid, seqNum, pc);
 
         if (lvpt.valid(pc.instAddr(), tid))

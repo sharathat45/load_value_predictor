@@ -25,7 +25,7 @@ namespace o3
 /**
  * Basically a wrapper class to hold LCT, LVPT and CVT
  */
-class LVPUnit : public SimObject
+class LVPUnit
 {
   public:
     
@@ -201,15 +201,6 @@ class LVPUnit : public SimObject
        */
     //   std::vector<History> predHist;
 
-      /** The LVPT. */
-      LVPT lvpt;
-
-      /** The LCT */
-      LCT lct;
-
-      /** The CVU */
-      CVU cvu;
-
     //   struct LVPredUnitStats : public statistics::Group
     //   {
     //       LVPredUnitStats(statistics::Group *parent);
@@ -232,6 +223,16 @@ class LVPUnit : public SimObject
   protected:
     /** Number of bits to shift instructions by for predictor addresses. */
     const unsigned instShiftAmt;
+
+  protected:
+      /** The LVPT. */
+      LVPT lvpt;
+
+      /** The LCT */
+      LCT lct;
+
+      /** The CVU */
+      CVU cvu;
 };
 
 } // namespace o3

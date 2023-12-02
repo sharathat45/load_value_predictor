@@ -70,6 +70,8 @@
 #include "sim/full_system.hh"
 #include "sim/system.hh"
 
+#include "debug/LVPUnit.hh"
+
 namespace gem5
 {
 
@@ -85,6 +87,7 @@ Fetch::Fetch(CPU *_cpu, const BaseO3CPUParams &params)
     : fetchPolicy(params.smtFetchPolicy),
       cpu(_cpu),
       branchPred(nullptr),
+      //lvpunit(params),
       decodeToFetchDelay(params.decodeToFetchDelay),
       renameToFetchDelay(params.renameToFetchDelay),
       iewToFetchDelay(params.iewToFetchDelay),
@@ -513,6 +516,8 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     // A bit of a misnomer...next_PC is actually the current PC until
     // this function updates it.
     bool predict_taken;
+    bool ld_predictible = false;
+    RegVal ld_predict_val;
 
     if (!inst->isControl()) {
         inst->staticInst->advancePC(next_pc);
@@ -524,6 +529,11 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     ThreadID tid = inst->threadNumber;
     predict_taken = branchPred->predict(inst->staticInst, inst->seqNum,
                                         next_pc, tid);
+    
+    // if (inst->isLoad()) {
+    //     ld_predictible = lvpunit -> predict(inst, inst->seqNum, ld_predict_val, next_pc, tid);
+    // }
+    
 
     if (predict_taken) {
         DPRINTF(Fetch, "[tid:%i] [sn:%llu] Branch at PC %#x "

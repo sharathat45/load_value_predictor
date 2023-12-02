@@ -58,6 +58,8 @@
 #include "sim/eventq.hh"
 #include "sim/probe/probe.hh"
 
+//#include "lvp_unit.hh"
+
 namespace gem5
 {
 
@@ -529,6 +531,8 @@ class Fetch
     FinishTranslationEvent finishTranslationEvent;
 
   protected:
+    //LVPUnit lvpunit;
+    
     struct FetchStatGroup : public statistics::Group
     {
         FetchStatGroup(CPU *cpu, Fetch *fetch);

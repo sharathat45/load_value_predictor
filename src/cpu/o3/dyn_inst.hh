@@ -187,6 +187,8 @@ class DynInst : public ExecContext, public RefCounted
         ReqMade,
         MemOpDone,
         HtmFromTransaction,
+        LdPredictible,
+        LdConstant,
         MaxFlags
     };
 
@@ -522,6 +524,18 @@ class DynInst : public ExecContext, public RefCounted
     setPredTaken(bool predicted_taken)
     {
         instFlags[PredTaken] = predicted_taken;
+    }
+
+    void
+    setLdPredictible(bool ld_predictible)
+    {
+        instFlags[LdPredictible] = ld_predictible;
+    }
+
+    void
+    setLdConstant(bool ld_const)
+    {
+        instFlags[LdConstant] = ld_const;
     }
 
     /** Returns whether the instruction mispredicted. */
