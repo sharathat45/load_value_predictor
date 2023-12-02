@@ -1,12 +1,12 @@
 #include "cpu/o3/lvp_unit.hh"
-
 #include <algorithm>
-
 #include "arch/generic/pcstate.hh"
 #include "base/compiler.hh"
 #include "base/trace.hh"
 #include "config/the_isa.hh"
 #include "debug/LVPUnit.hh"
+
+#include "params/BaseO3CPU.hh"
 
 namespace gem5
 {
@@ -16,7 +16,7 @@ namespace o3
 
 LVPUnit::LVPUnit(const BaseO3CPUParams &params)
     : numThreads(params.numThreads),
-        predHist(numThreads),
+        // predHist(numThreads),
         instShiftAmt(params.instShiftAmt),
         lct(params.LCTEntries,
             params.LCTCtrBits,
@@ -29,17 +29,18 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
         cvu(params.CVUnumEntries,
             params.LVPTEntries, // for creating LVPT index
             instShiftAmt,
-            params.numThreads),
-        stats(this)
+            params.numThreads)
+        // stats(this)
 {}
 
 
-bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid);
+bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid)
 {
     // See if LCT predicts predictible.
     // If so, get its value from LVPT.
 
-    ++stats.LCTLookups;
+    // ++stats.LCTLookups;
+
     uint8_t counter_val = lct.lookup(tid, pc.instAddr());
     bool is_predictible_ld = lct.getPrediction(counter_val);
     
@@ -52,7 +53,6 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVa
     {
         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted predictible for PC %s\n", tid, seqNum, pc);
 
-        ++stats.LVPTLookups;
         if (lvpt.valid(pc.instAddr(), tid))
         {
             DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT has valid entry for PC %s\n", tid, seqNum, pc);
@@ -101,25 +101,27 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVa
     // DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
 }
 
-void LVPUnit::update(const InstSeqNum &done_sn, ThreadID tid)
+void LVPUnit::update(const StaticInstPtr &inst, PCStateBase &pc, Addr data_addr, RegVal &ld_Value, const InstSeqNum &seqNum, ThreadID tid)
 {
-    DPRINTF(LVPUnit, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
+    // uint8_t counter_val = lct.lookup(tid, pc.instAddr());
+    // bool is_predictible_ld = lct.getPrediction(counter_val);
 
-    while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
-        // Update the LCT with the correct results.
-        lct.update(tid, predHist[tid].back().pc,
-               predHist[tid].back().predPredictible,
-               predHist[tid].back().ldHistory, false,
-               predHist[tid].back().inst,
-               predHist[tid].back().ldval);
+    // DPRINTF(LVPUnit, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
+    // while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
+    //     // Update the LCT with the correct results.
+    //     lct.update(tid, predHist[tid].back().pc,
+    //            predHist[tid].back().predPredictible,
+    //            predHist[tid].back().ldHistory, false,
+    //            predHist[tid].back().inst,
+    //            predHist[tid].back().ldval);
 
-        // The Direction of the LCT is altered because the LVPT did not have an entry
-        // The LVPT needs to be updated accordingly, LCT default is don't predict
+    //     // The Direction of the LCT is altered because the LVPT did not have an entry
+    //     // The LVPT needs to be updated accordingly, LCT default is don't predict
 
-        lvpt.update(tid, pc.instAddr(), ld_history);
+    //     lvpt.update(tid, pc.instAddr(), ld_history);
         
-        predHist[tid].pop_back();
-    }
+    //     predHist[tid].pop_back();
+    // }
 }
 
 /*

@@ -40,9 +40,8 @@ class CVU
      *  @param tagBits Number of bits for each tag in the CVU.
      *  @param instShiftAmt Offset amount for instructions to ignore alignment.
      */
-    CVU(unsigned numEntries, unsigned LVPTnumEntries,
-               unsigned instShiftAmt, unsigned numThreads);
-
+    CVU(unsigned _numEntries, unsigned _lvptnumentries, unsigned _instShiftAmt, unsigned _num_threads);
+    
     void reset();
 
     /** Checks if a LVPT entry is in the CVU.
@@ -70,7 +69,7 @@ class CVU
 
     // keep track of the LRU, should be called everytime
     // an entry is referenced
-    void reference_update(int index);
+    void LRU_update(int index);
 
   private:
     /** Returns the index into the BTB, based on the branch's PC.

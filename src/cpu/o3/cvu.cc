@@ -1,5 +1,4 @@
 #include "cpu/o3/cvu.hh"
-
 #include "base/intmath.hh"
 #include "base/trace.hh"
 #include "debug/LVPUnit.hh"

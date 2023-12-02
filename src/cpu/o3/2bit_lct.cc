@@ -1,5 +1,4 @@
 #include "cpu/o3/2bit_lct.hh"
-
 #include "base/intmath.hh"
 #include "base/logging.hh"
 #include "base/trace.hh"
@@ -16,7 +15,8 @@ LCT::LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsign
       lctCtrBits(_lctCtrBits),
       lctPredictorSets(lctSize),
       lctCtrs(lctPredictorSets, SatCounter8(lctCtrBits)),
-      indexMask(lctPredictorSets - 1)
+      indexMask(lctPredictorSets - 1),
+      instShiftAmt(_instShiftAmt)
 {
     if (!isPowerOf2(lctSize)) {
         fatal("Invalid LCT size!\n");
@@ -49,13 +49,13 @@ uint8_t LCT::lookup(ThreadID tid, Addr ld_addr)
 
 bool LCT::getPrediction(uint8_t &count)
 {
-    DPRINTF(LVPUnit, "prediction is %i.\n", (int)counter_val);
+    DPRINTF(LVPUnit, "prediction is %i.\n", (int)count);
 
     // Get the MSB of the count
     return (count >> (lctCtrBits - 1));
 }
 
-void LCT:: update(ThreadID tid, Addr ld_addr, bool prediction_outcome, void *ld_history, bool squashed)
+void LCT::update(ThreadID tid, Addr ld_addr, bool prediction_outcome, void *ld_history, bool squashed)
 {
     assert(ld_history == NULL);
     unsigned lct_idx;

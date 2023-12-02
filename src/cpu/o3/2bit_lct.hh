@@ -22,66 +22,29 @@ namespace o3
 class LCT 
 {
   public:
-    /**
-     * Default LCT constructor.
-     */
-    LCT(const BaseO3CPUParams &params);
 
-    /**
-     * Looks up the given address in the LCT and returns
-     * a true/false value as to whether it is taken.
-     * @param ld_addr The address of the ld to look up.
-     * @param ld_history Pointer to any ld history state.
-     * @return Whether or not the branch is taken.
-     */
-    bool lookup(ThreadID tid, Addr ld_addr, void * &ld_history);
+    LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsigned _numThreads);
 
-    /**
-     * Updates the LCT to don't predict if a lvpt entry is
-     * invalid or not found.
-     * @param ld_addr The address of the ld to look up.
-     * @param ld_history Pointer to any ld history state.
-     * @return Whether or not the ld is predictible.
-     */
+    uint8_t lookup(ThreadID tid, Addr ld_addr);
+
     void lvptUpdate(ThreadID tid, Addr ld_addr, void * &ld_history);
-
-    /**
-     * Updates the branch predictor with the actual result of a branch.
-     * @param ld_addr The address of the ld to update.
-     * @param taken Whether or not the ld was predictible.
-     */
-    void update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history,
-                bool squashed, const StaticInstPtr &inst, Addr corrTarget);
+  
+    void update(ThreadID tid, Addr ld_addr, bool prediction_outcome, void *ld_history, bool squashed);
 
     void squash(ThreadID tid, void *ld_history)
     { assert(ld_history == NULL); }
 
+    bool getPrediction(uint8_t &count);
+
   private:
-    /**
-     *  Returns the predictible or not prediction given the value of the
-     *  counter.
-     *  @param count The value of the counter.
-     *  @return The prediction based on the counter value.
-     */
-    inline bool getPrediction(uint8_t &count);
-
-    /** Calculates the local index based on the PC. */
-    inline unsigned getLocalIndex(Addr &PC);
-
-    /** Size of the local predictor. */
+   
+    inline unsigned getLocalIndex(Addr &ld_addr);
     const unsigned lctSize;
-
-    /** Number of bits of the local predictor's counters. */
     const unsigned lctCtrBits;
-
-    /** Number of sets. */
     const unsigned lctPredictorSets;
-
-    /** Array of counters that make up the local predictor. */
     std::vector<SatCounter8> lctCtrs;
-
-    /** Mask to get index bits. */
     const unsigned indexMask;
+    const unsigned instShiftAmt;
 };
 
 } // namespace o3

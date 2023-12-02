@@ -34,7 +34,7 @@ class LVPT
      *  @param shiftAmt Offset amount for load addresses to ignore alignment.
      *  @param numThreads Number of supported threads.
      */
-    LVPT(unsigned numEntries, unsigned shiftAmt, unsigned numThreads);
+    LVPT(unsigned _numEntries, unsigned _shiftAmt, unsigned _numThreads);
 
     void reset();
 
