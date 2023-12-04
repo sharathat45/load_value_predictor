@@ -81,7 +81,8 @@ CPU::CPU(const BaseO3CPUParams &params)
       instcount(0),
 #endif
       removeInstsThisCycle(false),
-      fetch(this, params),
+      lvpunit(params),
+      fetch(this, params, &lvpunit),
       decode(this, params),
       rename(this, params),
       iew(this, params),

@@ -16,6 +16,8 @@
 
 #include "params/BaseO3CPU.hh"
 
+#include "cpu/o3/dyn_inst_ptr.hh"
+
 namespace gem5
 {
 
@@ -41,7 +43,7 @@ class LVPUnit
      * @param tid The thread id.
      * @return Returns if the ld is predictible or not.
      */
-    bool predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid);
+    bool predict(const DynInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid);
     
     /**
      * Tells the LCT to commit any updates until the given sequence number.

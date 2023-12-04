@@ -71,6 +71,8 @@
 #include "params/BaseO3CPU.hh"
 #include "sim/process.hh"
 
+#include "lvp_unit.hh"
+
 namespace gem5
 {
 
@@ -399,6 +401,9 @@ class CPU : public BaseCPU
     bool removeInstsThisCycle;
 
   protected:
+    /** The load value predictor **/
+    LVPUnit lvpunit; // change
+
     /** The fetch stage. */
     Fetch fetch;
 

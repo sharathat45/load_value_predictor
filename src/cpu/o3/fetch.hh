@@ -57,8 +57,7 @@
 #include "mem/port.hh"
 #include "sim/eventq.hh"
 #include "sim/probe/probe.hh"
-
-//#include "lvp_unit.hh"
+#include "lvp_unit.hh"
 
 namespace gem5
 {
@@ -205,7 +204,7 @@ class Fetch
 
   public:
     /** Fetch constructor. */
-    Fetch(CPU *_cpu, const BaseO3CPUParams &params);
+    Fetch(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit * lvpunit);
 
     /** Returns the name of fetch. */
     std::string name() const;
@@ -531,7 +530,7 @@ class Fetch
     FinishTranslationEvent finishTranslationEvent;
 
   protected:
-    //LVPUnit lvpunit;
+    LVPUnit *lvp_unit;
     
     struct FetchStatGroup : public statistics::Group
     {

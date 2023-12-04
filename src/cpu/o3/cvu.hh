@@ -1,5 +1,5 @@
-#ifndef __CPU_PRED_BTB_HH__
-#define __CPU_PRED_BTB_HH__
+#ifndef __CPU_CVU_HH__
+#define __CPU_CVU_HH__
 
 #include "arch/generic/pcstate.hh"
 #include "base/logging.hh"
@@ -103,4 +103,4 @@ class CVU
 } // namespace branch_prediction
 } // namespace gem5
 
-#endif // __CPU_PRED_BTB_HH__
+#endif // __CPU_CVU_HH__

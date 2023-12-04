@@ -72,6 +72,8 @@
 
 #include "debug/LVPUnit.hh"
 
+#include "debug/LVPUnit.hh"
+
 namespace gem5
 {
 
@@ -83,11 +85,11 @@ Fetch::IcachePort::IcachePort(Fetch *_fetch, CPU *_cpu) :
 {}
 
 
-Fetch::Fetch(CPU *_cpu, const BaseO3CPUParams &params)
+Fetch::Fetch(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
     : fetchPolicy(params.smtFetchPolicy),
       cpu(_cpu),
       branchPred(nullptr),
-      //lvpunit(params),
+      lvp_unit(lvpunit),
       decodeToFetchDelay(params.decodeToFetchDelay),
       renameToFetchDelay(params.renameToFetchDelay),
       iewToFetchDelay(params.iewToFetchDelay),
@@ -530,10 +532,9 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     predict_taken = branchPred->predict(inst->staticInst, inst->seqNum,
                                         next_pc, tid);
     
-    // if (inst->isLoad()) {
-    //     ld_predictible = lvpunit -> predict(inst, inst->seqNum, ld_predict_val, next_pc, tid);
-    // }
-    
+    if (inst->isLoad()) {
+        ld_predictible = lvp_unit -> predict(inst, inst->seqNum, ld_predict_val, next_pc, tid);
+    }
 
     if (predict_taken) {
         DPRINTF(Fetch, "[tid:%i] [sn:%llu] Branch at PC %#x "

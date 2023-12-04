@@ -1,3 +1,4 @@
+#include "cpu/o3/dyn_inst.hh"
 #include "cpu/o3/lvp_unit.hh"
 #include <algorithm>
 #include "arch/generic/pcstate.hh"
@@ -33,7 +34,7 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
 {}
 
 
-bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid)
+bool LVPUnit::predict(const DynInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid)
 {
     // See if LCT predicts predictible.
     // If so, get its value from LVPT.
@@ -45,15 +46,15 @@ bool LVPUnit::predict(const StaticInstPtr &inst, const InstSeqNum &seqNum, RegVa
     
     if (!is_predictible_ld) 
     {
-        // inst -> setLdPredictible(false)
-        // inst -> setLdConstant(false)
+        inst -> setLdPredictible(false);
+        inst -> setLdConstant(false);
         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted not predictible for PC %s\n", tid, seqNum, pc);
         return false;
     }
     else
     {   
-        // inst -> setLdPredictible(false)
-        // inst -> setLdPredictible(counter_val == 3)
+        inst -> setLdPredictible(false);
+        inst -> setLdPredictible(counter_val == 3);
     
         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted predictible for PC %s\n", tid, seqNum, pc);
 
