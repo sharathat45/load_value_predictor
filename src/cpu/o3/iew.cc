@@ -1134,8 +1134,7 @@ IEW::printAvailableInsts()
     std::cout << "\n";
 }
 
-void
-IEW::executeInsts()
+void IEW::executeInsts()
 {
     wbNumInst = 0;
     wbCycle = 0;
@@ -1217,6 +1216,12 @@ IEW::executeInsts()
                     continue;
                 }
             } else if (inst->isLoad()) {
+
+                // if ()
+                // {
+                //     /* code */
+                // }
+                
                 // Loads will mark themselves as executed, and their writeback
                 // event adds the instruction to the queue to commit
                 fault = ldstQueue.executeLoad(inst);

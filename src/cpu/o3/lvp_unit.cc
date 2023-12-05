@@ -48,62 +48,25 @@ bool LVPUnit::predict(const DynInstPtr &inst, const InstSeqNum &seqNum, RegVal &
     {
         inst -> setLdPredictible(false);
         inst -> setLdConstant(false);
-        DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted not predictible for PC %s\n", tid, seqNum, pc);
         return false;
     }
     else
     {   
-        inst -> setLdPredictible(false);
-        inst -> setLdPredictible(counter_val == 3);
-    
-        DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LCT predicted predictible for PC %s\n", tid, seqNum, pc);
+        inst -> setLdPredictible(true);
+        inst -> setLdConstant(counter_val == 3);
 
         if (lvpt.valid(pc.instAddr(), tid))
         {
-            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT has valid entry for PC %s\n", tid, seqNum, pc);
             ld_Value = lvpt.lookup(pc.instAddr(), tid);
             return true;
         }
         else
         {
-            DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT doesn't have valid entry for PC %s\n", tid, seqNum, pc);
             return false;
         }
     }
+
     return is_predictible_ld;
-
-    // std::unique_ptr<RegVal> ldval(ld_Value.clone()); // should be load value
-    // set(ldval, LVPT.lookup(pc.instAddr(), tid));
-
-    // DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Creating prediction history buffer entry for PC %s\n", tid, seqNum, pc);
-    // PredictorHistory predict_record(seqNum, pc.instAddr(), pred_predictible_ld, ld_history, tid, inst);
-
-    // // Now lookup in the LVPT if its predictible or constant.
-    // if (pred_predictible_ld) {
-
-       
-    //     // Check LVPT on ld
-    //     if (LVPT.valid(pc.instAddr(), tid)) {
-    //         ++stats.LVPTHits;
-
-    //         // use the LVPT to get ld value.
-    //         set(ldval, LVPT.lookup(pc.instAddr(), tid));
-    //         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Instruction %s predicted ld value is %s\n", tid, seqNum, pc, *ldval);
-    //     } 
-    //     else 
-    //     {
-    //         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPT doesn't have a valid entry\n", tid, seqNum);
-    //         pred_predictible_ld = false;
-    //         predict_record.predPredictible = pred_predictible_ld;
-            
-    //         DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVPTUpdate called for %s\n", tid, seqNum, pc);
-    //     }
-    // }
-
-    // // predict_record.ldval = ldval->instAddr();
-
-    // predHist[tid].push_front(predict_record);
-    // DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] History entry added. predHist.size(): %i\n", tid, seqNum, predHist[tid].size());
 }
 
 void LVPUnit::update(const StaticInstPtr &inst, PCStateBase &pc, Addr data_addr, RegVal &ld_Value, const InstSeqNum &seqNum, ThreadID tid)
