@@ -220,6 +220,7 @@ class DynInst : public ExecContext, public RefCounted
     size_t _numSrcs;
     size_t _numDests;
 
+
     // Flattened register index of the destination registers of this
     // instruction.
     RegId *_flatDestIdx;
@@ -238,9 +239,17 @@ class DynInst : public ExecContext, public RefCounted
     // Whether or not the source register is ready, one bit per register.
     uint8_t *_readySrcIdx;
 
+    //Predicted ld value 
+    uint64_t predictedLdValue;
+
   public:
     size_t numSrcs() const { return _numSrcs; }
     size_t numDests() const { return _numDests; }
+
+    // Returns the
+
+    const uint64_t &PredictedLdValue() const { return predictedLdValue; }
+    void PredictedLdValue(const uint64_t ld_value) { predictedLdValue = ld_value; }
 
     // Returns the flattened register index of the idx'th destination
     // register.

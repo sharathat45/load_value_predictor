@@ -519,7 +519,7 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     // this function updates it.
     bool predict_taken;
     bool ld_predictible = false;
-    RegVal ld_predict_val;
+    
 
     if (!inst->isControl()) {
         inst->staticInst->advancePC(next_pc);
@@ -532,9 +532,26 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     predict_taken = branchPred->predict(inst->staticInst, inst->seqNum,
                                         next_pc, tid);
     
-    if (inst->isLoad()) {
-        ld_predictible = lvp_unit -> predict(inst, inst->seqNum, ld_predict_val, next_pc, tid);
+    if(ENABLE_LVP == true)
+    {
+        RegVal ld_predict_val;
+        if (inst->isLoad())
+        {
+            ld_predictible = lvp_unit->predict(inst, inst->seqNum, ld_predict_val, next_pc, tid);
+
+            if (ld_predictible)
+            {
+                DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVP predicted predictible for PC = %s with ld_val = %llu\n", tid, inst->seqNum, inst->pcState(), ld_predict_val);
+                inst->PredictedLdValue(ld_predict_val);
+            }
+            else
+            {
+                DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] LVP predicted not predictible for PC = %s with ld_val = %llu\n", tid, inst->seqNum, inst->pcState(), ld_predict_val);
+                inst->PredictedLdValue(0);
+            }
+        }
     }
+    
 
     if (predict_taken) {
         DPRINTF(Fetch, "[tid:%i] [sn:%llu] Branch at PC %#x "
