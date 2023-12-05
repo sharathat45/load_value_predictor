@@ -72,8 +72,6 @@
 
 #include "debug/LVPUnit.hh"
 
-#include "debug/LVPUnit.hh"
-
 namespace gem5
 {
 

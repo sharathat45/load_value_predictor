@@ -59,6 +59,8 @@
 #include "debug/O3PipeView.hh"
 #include "params/BaseO3CPU.hh"
 
+#include "debug/LVPUnit.hh"
+
 namespace gem5
 {
 
@@ -1159,6 +1161,11 @@ IEW::executeInsts()
         DPRINTF(IEW, "Execute: Executing instructions from IQ.\n");
 
         DynInstPtr inst = instQueue.getInstToExecute();
+        
+        // 
+        if (inst -> isLoad()) {
+            DPRINTF(LVPUnit, "Execute: If predictible %d, If constant %d\n", inst->readLdPredictible(), inst->readLdConstant());
+        }
 
         DPRINTF(IEW, "Execute: Processing PC %s, [tid:%i] [sn:%llu].\n",
                 inst->pcState(), inst->threadNumber,inst->seqNum);

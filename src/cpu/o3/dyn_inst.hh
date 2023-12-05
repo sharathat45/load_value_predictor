@@ -538,6 +538,12 @@ class DynInst : public ExecContext, public RefCounted
         instFlags[LdConstant] = ld_const;
     }
 
+    bool
+    readLdPredictible() { return instFlags[LdPredictible];}
+
+    bool
+    readLdConstant() { return instFlags[LdConstant];}
+
     /** Returns whether the instruction mispredicted. */
     bool
     mispredicted()
