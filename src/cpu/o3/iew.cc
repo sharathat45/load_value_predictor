@@ -67,9 +67,10 @@ namespace gem5
 namespace o3
 {
 
-IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params)
+IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvp_unit)
     : issueToExecQueue(params.backComSize, params.forwardComSize),
       cpu(_cpu),
+      lvpunit(lvp_unit),
       instQueue(_cpu, this, params),
       ldstQueue(_cpu, this, params),
       fuPool(params.fuPool),
@@ -1161,10 +1162,9 @@ void IEW::executeInsts()
 
         DynInstPtr inst = instQueue.getInstToExecute();
         
-        // 
-        if (inst -> isLoad()) {
-            DPRINTF(LVPUnit, "Execute: If predictible %d, If constant %d\n", inst->readLdPredictible(), inst->readLdConstant());
-        }
+        // if (inst -> isLoad()) {
+        //     DPRINTF(LVPUnit, "Execute: If predictible %d, If constant %d\n", inst->readLdPredictible(), inst->readLdConstant());
+        // }
 
         DPRINTF(IEW, "Execute: Processing PC %s, [tid:%i] [sn:%llu].\n",
                 inst->pcState(), inst->threadNumber,inst->seqNum);
@@ -1241,6 +1241,8 @@ void IEW::executeInsts()
                 }
             } else if (inst->isStore()) {
                 fault = ldstQueue.executeStore(inst);
+
+                //lvpunit -> cvu.invalidate(inst->pcState,inst->effAddr, inst->threadNumber);
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {

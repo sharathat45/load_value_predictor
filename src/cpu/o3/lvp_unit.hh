@@ -226,13 +226,14 @@ class LVPUnit
     /** Number of bits to shift instructions by for predictor addresses. */
     const unsigned instShiftAmt;
 
-  protected:
+  private:
       /** The LVPT. */
       LVPT lvpt;
 
       /** The LCT */
       LCT lct;
 
+  public: // Need to call CVU invalidation in iew.cc
       /** The CVU */
       CVU cvu;
 };

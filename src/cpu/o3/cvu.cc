@@ -80,7 +80,7 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
 // Return True if the corresponding entry appears in the table
 // and has been invalidated. Return False if no corresponding
 // entry was found.
-bool CVU::invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid)
+bool CVU::invalidate(Addr instPC, Addr StdataAddr, ThreadID tid)
 {   
     unsigned instr_idx = getIndex(instPC, tid);
 
@@ -88,7 +88,7 @@ bool CVU::invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid)
     
     for (unsigned i = 0;i < numEntries; ++i){
         if (cvu_table[i].valid
-            && LwdataAddr == cvu_table[i].data_addr) {
+            && StdataAddr == cvu_table[i].data_addr) {
                 cvu_table[i].valid = false;
                 cvu_table[i].data_addr = 0;
                 cvu_table[i].instr_idx = 0;
