@@ -55,6 +55,8 @@
 #include "debug/IEW.hh"
 #include "sim/probe/probe.hh"
 
+#include "lvp_unit.hh"
+
 namespace gem5
 {
 
@@ -125,9 +127,10 @@ class IEW
     /** To probe when instruction execution is complete. */
     ProbePointArg<DynInstPtr> *ppToCommit;
 
+    LVPUnit *lvpunit;
   public:
     /** Constructs a IEW with the given parameters. */
-    IEW(CPU *_cpu, const BaseO3CPUParams &params);
+    IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvp_unit);
 
     /** Returns the name of the IEW stage. */
     std::string name() const;

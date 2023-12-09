@@ -85,7 +85,7 @@ CPU::CPU(const BaseO3CPUParams &params)
       fetch(this, params, &lvpunit),
       decode(this, params),
       rename(this, params),
-      iew(this, params),
+      iew(this, params, &lvpunit),
       commit(this, params),
 
       regFile(params.numPhysIntRegs,
