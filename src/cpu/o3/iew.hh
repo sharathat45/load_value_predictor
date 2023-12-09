@@ -54,8 +54,7 @@
 #include "cpu/timebuf.hh"
 #include "debug/IEW.hh"
 #include "sim/probe/probe.hh"
-
-#include "lvp_unit.hh"
+#include "cpu/o3/lvp_unit.hh"
 
 namespace gem5
 {
@@ -130,7 +129,7 @@ class IEW
     LVPUnit *lvpunit;
   public:
     /** Constructs a IEW with the given parameters. */
-    IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvp_unit);
+    IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit);
 
     /** Returns the name of the IEW stage. */
     std::string name() const;
@@ -367,7 +366,12 @@ class IEW
      */
     bool updateLSQNextCycle;
 
+  protected:
+    bool ENABLE_LVP = true;
+    LVPUnit *lvp_unit;
+
   private:
+
     /** Records if there is a fetch redirect on this cycle for each thread. */
     bool fetchRedirect[MaxThreads];
 

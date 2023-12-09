@@ -18,7 +18,7 @@ class LVPT
     struct LVPTEntry
     {
         /** The entry's load value. */
-        RegVal value;
+        uint8_t value;
 
         /** The entry's thread id. */
         ThreadID tid;
@@ -43,7 +43,7 @@ class LVPT
      *  @param tid The thread id.
      *  @return Returns the predicted load value.
      */
-    RegVal lookup(Addr loadAddr, ThreadID tid);
+    uint8_t lookup(Addr loadAddr, ThreadID tid);
 
     /** Checks if a load is in the LVPT.
      *  @param loadAddr The address of the load to look up.
@@ -57,7 +57,7 @@ class LVPT
      *  @param loadValue The value of the load being updated.
      *  @param tid The thread id.
      */
-    void update(Addr loadAddr, RegVal loadValue, ThreadID tid);
+    void update(Addr loadAddr, uint8_t loadValue, ThreadID tid);
 
   private:
     /** Returns the index into the LVPT, based on the load's address.

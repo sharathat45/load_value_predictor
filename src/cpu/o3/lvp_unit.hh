@@ -43,14 +43,14 @@ class LVPUnit
      * @param tid The thread id.
      * @return Returns if the ld is predictible or not.
      */
-    bool predict(const DynInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid);
-    
+    bool predict(const DynInstPtr &inst);
+
     /**
      * Tells the LCT to commit any updates until the given sequence number.
      * @param done_sn The sequence number to commit any older updates up until.
      * @param tid The thread id.
      */
-    void update(const StaticInstPtr &inst, PCStateBase &pc, Addr data_addr, RegVal &ld_Value, const InstSeqNum &seqNum, ThreadID tid);
+    void update(const DynInstPtr &inst);
 
     /**
      * Squashes all outstanding updates until a given sequence number.
@@ -69,7 +69,7 @@ class LVPUnit
      * @param actually_predictible The correct lvp direction.
      * @param tid The thread id.
      */
-    // void squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bool actually_predictible, ThreadID tid);
+    // void squash(const InstSeqNum &squashed_sn, const uint8_t &corr_ldval, bool actually_predictible, ThreadID tid);
 
     /**
      * @param ld_history Pointer to the history object.  The predictor
@@ -110,7 +110,7 @@ class LVPUnit
      * @param inst_PC The PC to look up.
      * @return The ld value.
      */
-    // const RegVal * LVPTLookup(Addr inst_pc)
+    // const uint8_t * LVPTLookup(Addr inst_pc)
     // {
     //     return LVPT.lookup(inst_pc, 0);
     // }
@@ -134,15 +134,14 @@ class LVPUnit
      * @param inst_PC The ld ins PC that will be updated.
      * @param ldval The ld value that will be added to the LVPT.
      */
-    // void LVPTUpdate(Addr instPC, const RegVal &ldval)
+    // void LVPTUpdate(Addr instPC, const uint8_t &ldval)
     // {
     //     LVPT.update(instPC, target, 0);
     // }
 
-
     // void dump();
 
-    private:
+  private:
     //   struct PredictorHistory
     //   {
     //       /**
@@ -193,14 +192,14 @@ class LVPUnit
 
     //   typedef std::deque<PredictorHistory> History;
 
-      /** Number of the threads for which the branch history is maintained. */
-      const unsigned numThreads;
+    /** Number of the threads for which the branch history is maintained. */
+    const unsigned numThreads;
 
-      /**
-       * The per-thread predictor history. This is used to update the predictor
-       * as instructions are committed, or restore it to the proper state after
-       * a squash.
-       */
+    /**
+     * The per-thread predictor history. This is used to update the predictor
+     * as instructions are committed, or restore it to the proper state after
+     * a squash.
+     */
     //   std::vector<History> predHist;
 
     //   struct LVPredUnitStats : public statistics::Group

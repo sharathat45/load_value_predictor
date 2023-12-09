@@ -28,8 +28,8 @@ class LCT
     uint8_t lookup(ThreadID tid, Addr ld_addr);
 
     void lvptUpdate(ThreadID tid, Addr ld_addr, void * &ld_history);
-  
-    void update(ThreadID tid, Addr ld_addr, bool prediction_outcome, void *ld_history, bool squashed);
+
+    void update(ThreadID tid, Addr ld_addr, bool prediction_outcome, bool squashed);
 
     void squash(ThreadID tid, void *ld_history)
     { assert(ld_history == NULL); }

@@ -55,9 +55,8 @@ bool LCT::getPrediction(uint8_t &count)
     return (count >> (lctCtrBits - 1));
 }
 
-void LCT::update(ThreadID tid, Addr ld_addr, bool prediction_outcome, void *ld_history, bool squashed)
+void LCT::update(ThreadID tid, Addr ld_addr, bool prediction_outcome, bool squashed)
 {
-    assert(ld_history == NULL);
     unsigned lct_idx;
 
     // No state to restore, and we do not update on the wrong path.

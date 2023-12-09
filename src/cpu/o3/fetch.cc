@@ -79,7 +79,7 @@ namespace o3
 {
 
 Fetch::IcachePort::IcachePort(Fetch *_fetch, CPU *_cpu) :
-        RequestPort(_cpu->name() + ".icache_port", _cpu), fetch(_fetch)
+    RequestPort(_cpu->name() + ".icache_port", _cpu), fetch(_fetch)
 {}
 
 
@@ -516,8 +516,7 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     // A bit of a misnomer...next_PC is actually the current PC until
     // this function updates it.
     bool predict_taken;
-    bool ld_predictible = false;
-    RegVal ld_predict_val;
+    
 
     if (!inst->isControl()) {
         inst->staticInst->advancePC(next_pc);
@@ -530,8 +529,19 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     predict_taken = branchPred->predict(inst->staticInst, inst->seqNum,
                                         next_pc, tid);
     
-    if (inst->isLoad()) {
-        ld_predictible = lvp_unit -> predict(inst, inst->seqNum, ld_predict_val, next_pc, tid);
+    if (inst->isLoad())
+    {
+        if(ENABLE_LVP == true)
+        {
+            uint8_t ld_predict_val;
+            bool ld_predictible = lvp_unit->predict(inst);
+        }
+        else
+        {
+            inst->setLdPredictible(false);
+            inst->setLdConstant(false);
+            inst->PredictedLdValue(0);
+        }
     }
 
     if (predict_taken) {
