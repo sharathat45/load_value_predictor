@@ -19,8 +19,14 @@ BENCHMARK_CONFIG = configs/spec/spec_se.py
 DEBUG_CLASS = LVPUnit
 DEBUG = 0
 
+ENABLE_LVP = 1
+
 ifeq ($(DEBUG), 1)
 	DEBUG_FLAGS = --debug-flags=$(DEBUG_CLASS) --debug-file=trace.out
+endif
+
+ifeq ($(ENABLE_LVP), 1)
+	CONFIG_FLAGS += --enable-lvp
 endif
 
 .PHONY: run clean build patch benchmark hello debug sjeng lbm milc astar leslie3d namd 

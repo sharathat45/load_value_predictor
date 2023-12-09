@@ -119,6 +119,7 @@ def get_processes(args):
 parser = argparse.ArgumentParser()
 Options.addCommonOptions(parser)
 Options.addSEOptions(parser)
+Options.addLVPOptions(parser)
 
 if '--ruby' in sys.argv:
     Ruby.define_options(parser)
@@ -236,6 +237,8 @@ for i in range(np):
         indirectBPClass = \
             ObjectList.indirect_bp_list.get(args.indirect_bp_type)
         system.cpu[i].branchPred.indirectBranchPred = indirectBPClass()
+
+    system.cpu[i].enableLVP = args.enable_lvp
 
     system.cpu[i].createThreads()
 

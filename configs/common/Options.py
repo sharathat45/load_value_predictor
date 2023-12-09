@@ -531,3 +531,10 @@ def addFSOptions(parser):
     # Debug option
     parser.add_argument("--wait-gdb", default=False, action='store_true',
                         help="Wait for remote GDB to connect.")
+
+
+def addLVPOptions(parser):
+    # LVP options
+    parser.add_argument("--enable-lvp", default=False, action='store_true',
+                        help="Enable load value prediction")
+
