@@ -70,52 +70,56 @@ struct BaseCPUParams;
 namespace o3
 {
 
-CPU::CPU(const BaseO3CPUParams &params)
-    : BaseCPU(params),
-      mmu(params.mmu),
-      tickEvent([this]{ tick(); }, "O3CPU tick",
-                false, Event::CPU_Tick_Pri),
-      threadExitEvent([this]{ exitThreads(); }, "O3CPU exit threads",
-                false, Event::CPU_Exit_Pri),
+    CPU::CPU(const BaseO3CPUParams &params)
+        : BaseCPU(params),
+          mmu(params.mmu),
+          tickEvent([this]
+                    { tick(); },
+                    "O3CPU tick",
+                    false, Event::CPU_Tick_Pri),
+          threadExitEvent([this]
+                          { exitThreads(); },
+                          "O3CPU exit threads",
+                          false, Event::CPU_Exit_Pri),
 #ifndef NDEBUG
-      instcount(0),
+          instcount(0),
 #endif
-      removeInstsThisCycle(false),
-      lvpunit(params),
-      fetch(this, params, &lvpunit),
-      decode(this, params),
-      rename(this, params),
-      iew(this, params),
-      commit(this, params),
+          removeInstsThisCycle(false),
+          lvpunit(params),
+          fetch(this, params, &lvpunit),
+          decode(this, params),
+          rename(this, params),
+          iew(this, params, &lvpunit),
+          commit(this, params),
 
-      regFile(params.numPhysIntRegs,
-              params.numPhysFloatRegs,
-              params.numPhysVecRegs,
-              params.numPhysVecPredRegs,
-              params.numPhysCCRegs,
-              params.isa[0]->regClasses()),
+          regFile(params.numPhysIntRegs,
+                  params.numPhysFloatRegs,
+                  params.numPhysVecRegs,
+                  params.numPhysVecPredRegs,
+                  params.numPhysCCRegs,
+                  params.isa[0]->regClasses()),
 
-      freeList(name() + ".freelist", &regFile),
+          freeList(name() + ".freelist", &regFile),
 
-      rob(this, params),
+          rob(this, params),
 
-      scoreboard(name() + ".scoreboard", regFile.totalNumPhysRegs()),
+          scoreboard(name() + ".scoreboard", regFile.totalNumPhysRegs()),
 
-      isa(numThreads, NULL),
+          isa(numThreads, NULL),
 
-      timeBuffer(params.backComSize, params.forwardComSize),
-      fetchQueue(params.backComSize, params.forwardComSize),
-      decodeQueue(params.backComSize, params.forwardComSize),
-      renameQueue(params.backComSize, params.forwardComSize),
-      iewQueue(params.backComSize, params.forwardComSize),
-      activityRec(name(), NumStages,
-                  params.backComSize + params.forwardComSize,
-                  params.activity),
+          timeBuffer(params.backComSize, params.forwardComSize),
+          fetchQueue(params.backComSize, params.forwardComSize),
+          decodeQueue(params.backComSize, params.forwardComSize),
+          renameQueue(params.backComSize, params.forwardComSize),
+          iewQueue(params.backComSize, params.forwardComSize),
+          activityRec(name(), NumStages,
+                      params.backComSize + params.forwardComSize,
+                      params.activity),
 
-      globalSeqNum(1),
-      system(params.system),
-      lastRunningCycle(curCycle()),
-      cpuStats(this)
+          globalSeqNum(1),
+          system(params.system),
+          lastRunningCycle(curCycle()),
+          cpuStats(this)
 {
     fatal_if(FullSystem && params.numThreads > 1,
             "SMT is not supported in O3 in full system mode currently.");

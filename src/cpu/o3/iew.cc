@@ -60,6 +60,7 @@
 #include "params/BaseO3CPU.hh"
 
 #include "debug/LVPUnit.hh"
+#include "cpu/o3/lvp_unit.hh"
 
 namespace gem5
 {
@@ -67,9 +68,10 @@ namespace gem5
 namespace o3
 {
 
-IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params)
+IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
     : issueToExecQueue(params.backComSize, params.forwardComSize),
       cpu(_cpu),
+      lvp_unit(lvpunit),
       instQueue(_cpu, this, params),
       ldstQueue(_cpu, this, params),
       fuPool(params.fuPool),
@@ -1006,18 +1008,40 @@ IEW::dispatchInsts(ThreadID tid)
 
             toRename->iewInfo[tid].dispatchedToSQ++;
         } else if (inst->isLoad()) {
+           
+           
             DPRINTF(IEW, "[tid:%i] Issue: Memory instruction "
                     "encountered, adding to LSQ.\n", tid);
 
-            // Reserve a spot in the load store queue for this
-            // memory access.
-            ldstQueue.insertLoad(inst);
+            // If the load is constant, then we can skip the memory access
+            if (ENABLE_LVP == true)
+            {
+                if (inst->readLdConstant() == false)
+                {
+                    // Reserve a spot in the load store queue for this
+                    // memory access.
+                    ldstQueue.insertLoad(inst);
+                }
+                else
+                {
+                    DPRINTF(LVPUnit, "Issue: [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
+                            tid, inst->seqNum, inst->pcState(), inst->memOpDone(), inst->isInLSQ());                
+                }
+            }
+            else{
+                // Reserve a spot in the load store queue for this
+                // memory access.
+                ldstQueue.insertLoad(inst);
+            }
 
             ++iewStats.dispLoadInsts;
 
             add_to_iq = true;
 
             toRename->iewInfo[tid].dispatchedToLQ++;
+       
+       
+       
         } else if (inst->isStore()) {
             DPRINTF(IEW, "[tid:%i] Issue: Memory instruction "
                     "encountered, adding to LSQ.\n", tid);
@@ -1149,25 +1173,18 @@ void IEW::executeInsts()
 
     // Uncomment this if you want to see all available instructions.
     // @todo This doesn't actually work anymore, we should fix it.
-//    printAvailableInsts();
+    //    printAvailableInsts();
 
     // Execute/writeback any instructions that are available.
     int insts_to_execute = fromIssue->size;
     int inst_num = 0;
-    for (; inst_num < insts_to_execute;
-          ++inst_num) {
+    for (; inst_num < insts_to_execute; ++inst_num) {
 
         DPRINTF(IEW, "Execute: Executing instructions from IQ.\n");
 
         DynInstPtr inst = instQueue.getInstToExecute();
         
-        // 
-        if (inst -> isLoad()) {
-            DPRINTF(LVPUnit, "Execute: If predictible %d, If constant %d\n", inst->readLdPredictible(), inst->readLdConstant());
-        }
-
-        DPRINTF(IEW, "Execute: Processing PC %s, [tid:%i] [sn:%llu].\n",
-                inst->pcState(), inst->threadNumber,inst->seqNum);
+        DPRINTF(IEW, "Execute: Processing PC %s, [tid:%i] [sn:%llu].\n", inst->pcState(), inst->threadNumber,inst->seqNum);
 
         // Notify potential listeners that this instruction has started
         // executing
@@ -1217,28 +1234,41 @@ void IEW::executeInsts()
                 }
             } else if (inst->isLoad()) {
 
-                // if ()
-                // {
-                //     /* code */
-                // }
-                
-                // Loads will mark themselves as executed, and their writeback
-                // event adds the instruction to the queue to commit
-                fault = ldstQueue.executeLoad(inst);
+                // initiateMemRead(Addr addr, unsigned size, Request::Flags flags, const std::vector<bool> &byte_enable)
 
-                if (inst->isTranslationDelayed() &&
-                    fault == NoFault) {
-                    // A hw page table walk is currently going on; the
-                    // instruction must be deferred.
-                    DPRINTF(IEW, "Execute: Delayed translation, deferring "
-                            "load.\n");
-                    instQueue.deferMemInst(inst);
-                    continue;
-                }
-
-                if (inst->isDataPrefetch() || inst->isInstPrefetch()) {
+                // If the load is constant, then we can skip the memory access
+                if (ENABLE_LVP == true && inst->readLdConstant() == true)
+                {
+                    inst->setExecuted();
                     inst->fault = NoFault;
+                    instToCommit(inst);
+                    //Not sure if the activity needs to be recorded here
+                    // activityThisCycle();
+
+                    DPRINTF(LVPUnit, "EX: [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
+                            inst->threadNumber, inst->seqNum, inst->pcState(), inst->memOpDone(), inst->isInLSQ());
                 }
+                else
+                {
+                    // Loads will mark themselves as executed, and their writeback
+                    // event adds the instruction to the queue to commit
+                    fault = ldstQueue.executeLoad(inst);
+
+                    if (inst->isTranslationDelayed() && fault == NoFault)
+                    {
+                        // A hw page table walk is currently going on; the
+                        // instruction must be deferred.
+                        DPRINTF(IEW, "Execute: Delayed translation, deferring load.\n");
+                        instQueue.deferMemInst(inst);
+                        continue;
+                    }
+
+                    if (inst->isDataPrefetch() || inst->isInstPrefetch())
+                    {
+                        inst->fault = NoFault;
+                    }
+                }
+                    
             } else if (inst->isStore()) {
                 fault = ldstQueue.executeStore(inst);
 
@@ -1390,16 +1420,14 @@ void IEW::executeInsts()
 
 }
 
-void
-IEW::writebackInsts()
+void IEW::writebackInsts()
 {
     // Loop through the head of the time buffer and wake any
     // dependents.  These instructions are about to write back.  Also
     // mark scoreboard that this instruction is finally complete.
     // Either have IEW have direct access to scoreboard, or have this
     // as part of backwards communication.
-    for (int inst_num = 0; inst_num < wbWidth &&
-             toCommit->insts[inst_num]; inst_num++) {
+    for (int inst_num = 0; inst_num < wbWidth && toCommit->insts[inst_num]; inst_num++) {
         DynInstPtr inst = toCommit->insts[inst_num];
         ThreadID tid = inst->threadNumber;
 
@@ -1416,17 +1444,35 @@ IEW::writebackInsts()
         // E.g. Strictly ordered loads have not actually executed when they
         // are first sent to commit.  Instead commit must tell the LSQ
         // when it's ready to execute the strictly ordered load.
-        if (!inst->isSquashed() && inst->isExecuted() &&
-                inst->getFault() == NoFault) {
+        if (!inst->isSquashed() && inst->isExecuted() && inst->getFault() == NoFault) {
+
             int dependents = instQueue.wakeDependents(inst);
+
+            if (ENABLE_LVP == true && inst->isLoad())
+            {
+                if (inst->readLdConstant() == true)
+                {
+                    DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
+                            inst->threadNumber, inst->seqNum, inst->pcState(), inst->memOpDone(), inst->isInLSQ());
+                }
+                else
+                {
+                    if (inst->memOpDone()  && inst->memData != nullptr)
+                    {
+                        // update the load value Predictor 
+                        lvp_unit->update(inst);
+                        DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC = %s data_addr:%llu ld_val:%u \n",
+                                inst->threadNumber, inst->seqNum, inst->pcState(), inst->effAddr, *(inst->memData));
+
+                    }
+                }
+            }
 
             for (int i = 0; i < inst->numDestRegs(); i++) {
                 // Mark register as ready if not pinned
-                if (inst->renamedDestIdx(i)->
-                        getNumPinnedWritesToComplete() == 0) {
-                    DPRINTF(IEW,"Setting Destination Register %i (%s)\n",
-                            inst->renamedDestIdx(i)->index(),
-                            inst->renamedDestIdx(i)->className());
+                if (inst->renamedDestIdx(i)-> getNumPinnedWritesToComplete() == 0) 
+                {
+                    DPRINTF(IEW,"Setting Destination Register %i (%s)\n", inst->renamedDestIdx(i)->index(), inst->renamedDestIdx(i)->className());
                     scoreboard->setReg(inst->renamedDestIdx(i));
                 }
             }
@@ -1437,6 +1483,7 @@ IEW::writebackInsts()
             }
             iewStats.writebackCount[tid]++;
         }
+
     }
 }
 

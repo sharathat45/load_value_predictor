@@ -584,9 +584,6 @@ LSQUnit::checkViolations(typename LoadQueue::iterator& loadIt,
     return NoFault;
 }
 
-
-
-
 Fault
 LSQUnit::executeLoad(const DynInstPtr &inst)
 {

@@ -34,13 +34,14 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
 {}
 
 
-bool LVPUnit::predict(const DynInstPtr &inst, const InstSeqNum &seqNum, RegVal &ld_Value, PCStateBase &pc, ThreadID tid)
+bool LVPUnit::predict(const DynInstPtr &inst)
 {
     // See if LCT predicts predictible.
     // If so, get its value from LVPT.
 
     // ++stats.LCTLookups;
 
+    PCStateBase pc = inst->pcState();
     uint8_t counter_val = lct.lookup(tid, pc.instAddr());
     bool is_predictible_ld = lct.getPrediction(counter_val);
     
@@ -48,6 +49,7 @@ bool LVPUnit::predict(const DynInstPtr &inst, const InstSeqNum &seqNum, RegVal &
     {
         inst -> setLdPredictible(false);
         inst -> setLdConstant(false);
+        inst -> PredictedLdValue(0);
         return false;
     }
     else
@@ -57,11 +59,15 @@ bool LVPUnit::predict(const DynInstPtr &inst, const InstSeqNum &seqNum, RegVal &
 
         if (lvpt.valid(pc.instAddr(), tid))
         {
-            ld_Value = lvpt.lookup(pc.instAddr(), tid);
+            uint8_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
+            inst->PredictedLdValue(ld_predict_val);
+            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC = %s with ld_val = %u\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
             return true;
         }
         else
         {
+            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] **** LVPT and LCT outcome not matching **** = %s \n", tid, inst->seqNum, inst->pcState());
+            inst -> PredictedLdValue(0);
             return false;
         }
     }
@@ -69,12 +75,60 @@ bool LVPUnit::predict(const DynInstPtr &inst, const InstSeqNum &seqNum, RegVal &
     return is_predictible_ld;
 }
 
-void LVPUnit::update(const StaticInstPtr &inst, PCStateBase &pc, Addr data_addr, RegVal &ld_Value, const InstSeqNum &seqNum, ThreadID tid)
+void LVPUnit::update(const DynInstPtr &inst)
 {
-    // uint8_t counter_val = lct.lookup(tid, pc.instAddr());
-    // bool is_predictible_ld = lct.getPrediction(counter_val);
+    //can use  effAddrValid()
 
-    // DPRINTF(LVPUnit, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
+    uint8_t mem_ld_value = *(inst->memData);
+    PCStateBase pc = inst->pcState();
+    ThreadID tid = inst->threadNumber;
+
+
+    DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC = %s data_addr:%llu ld_val:%u \n",
+         inst->threadNumber, inst->seqNum, inst->pcState(), *(inst->memData), inst->effAddr);
+
+
+    bool valid_entry = lvpt.valid(pc.instAddr(), tid);
+
+    if (!valid_entry)
+    {
+        lvpt.update(pc.instAddr(), mem_ld_value, tid);
+        //make the counter to not predictible (00) => not predictible (01)
+        lct.update(tid, pc.instAddr(), true, false);
+    }
+    else
+    {       
+        uint8_t lvpt_ld_value = lvpt.lookup(pc.instAddr(), tid);
+        uint8_t pred_ld_value = inst->PredictedLdValue();
+
+        if (lvpt_ld_value != pred_ld_value)
+        {
+            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC = %s **** LVPT ENTRY != PREDICTED VALUE *** lvpt_ld_value:%u pred_ld_value:%u  mem_ld_value=%u\n",
+                    inst->threadNumber, inst->seqNum, inst->pcState(), lvpt_ld_value, pred_ld_value, mem_ld_value);
+        }
+        else
+        {
+            if (pred_ld_value == mem_ld_value)
+            {
+                // make the counter to predictible
+                lct.update(tid, pc.instAddr(), true, false);
+
+                if (lct.lookup(tid, pc.instAddr()) == 3)
+                {
+                    cvu.update(pc.instAddr(), inst->effAddr(), mem_ld_value, tid);
+                }
+            }
+            else
+            {
+                // make the counter to not predictible
+                lct.update(tid, pc.instAddr(), false, false);
+                lvpt.update(pc.instAddr(), mem_ld_value, tid);
+            }
+         }
+    }
+
+    DPRINTF(LVPUnit, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
+    
     // while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
     //     // Update the LCT with the correct results.
     //     lct.update(tid, predHist[tid].back().pc,
@@ -145,7 +199,7 @@ void LVPUnit::squash(const InstSeqNum &squashed_sn, ThreadID tid)
     }
 }
 
-void LVPUnit::squash(const InstSeqNum &squashed_sn, const RegVal &corr_ldval, bool actually_predictible, ThreadID tid)
+void LVPUnit::squash(const InstSeqNum &squashed_sn, const uint8_t &corr_ldval, bool actually_predictible, ThreadID tid)
 {
     // Now that we know that a ldval was mispredicted, we need to undo
     // all the branches that have been seen up until this branch and
