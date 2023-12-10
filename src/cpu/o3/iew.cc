@@ -1233,7 +1233,7 @@ void IEW::executeInsts()
 
                 // should invalidate right after execute
                 // wait until commit will be late
-                lvpunit -> cvu_invalidate(inst->pcState().instAddr(),inst->effAddr, inst->threadNumber);
+                // lvpunit -> cvu_invalidate(inst->pcState().instAddr(),inst->effAddr, inst->threadNumber);
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {
