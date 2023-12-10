@@ -52,6 +52,8 @@ class LVPUnit
      */
     void update(const DynInstPtr &inst);
 
+    bool cvu_invalidate(Addr instPC, Addr StdataAddr, ThreadID tid);
+
     /**
      * Squashes all outstanding updates until a given sequence number.
      * @param squashed_sn The sequence number to squash any younger updates up

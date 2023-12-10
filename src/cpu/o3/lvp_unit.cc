@@ -148,6 +148,10 @@ void LVPUnit::update(const DynInstPtr &inst)
     // }
 }
 
+bool LVPUnit::cvu_invalidate(Addr instPC, Addr StdataAddr, ThreadID tid) {
+    return cvu.invalidate(instPC,StdataAddr,tid);
+}
+
 /*
 LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
     : statistics::Group(parent),
