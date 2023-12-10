@@ -1245,6 +1245,8 @@ void IEW::executeInsts()
                     inst->fault = NoFault;
                     instToCommit(inst);
                     //Not sure if the activity needs to be recorded here
+                    // if load is not executed, effaddr will not be set
+                    // checkviolation function in lsq unit might not work
                     // activityThisCycle();
 
                     DPRINTF(LVPUnit, "EX: [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
@@ -1274,7 +1276,9 @@ void IEW::executeInsts()
             } else if (inst->isStore()) {
                 fault = ldstQueue.executeStore(inst);
 
-                //lvpunit -> cvu.invalidate(inst->pcState,inst->effAddr, inst->threadNumber);
+                // should invalidate right after execute
+                // wait until commit will be late
+                lvpunit -> cvu.invalidate(inst->pcState().instAddr(),inst->effAddr, inst->threadNumber);
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {
