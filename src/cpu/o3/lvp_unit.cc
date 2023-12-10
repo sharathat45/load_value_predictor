@@ -40,13 +40,15 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     // See if LCT predicts predictible.
     // If so, get its value from LVPT.
 
-    // ++stats.LCTLookups;
 
     ThreadID tid = inst->threadNumber;
 
     const PCStateBase &pc = inst->pcState();
     uint8_t counter_val = lct.lookup(tid, pc.instAddr());
     bool is_predictible_ld = lct.getPrediction(counter_val);
+
+    stats.LCTLookups += 1;
+    stats.LCTPredictable += is_predictible_ld;
     
     if (!is_predictible_ld) 
     {
@@ -57,11 +59,16 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     }
     else
     {   
+        ++stats.LVPTLookups;
+
         inst -> setLdPredictible(true);
         inst -> setLdConstant(counter_val == 3);
 
         if (lvpt.valid(pc.instAddr(), tid))
         {
+            ++stats.LVPTHits;
+            ++stats.ldvalPredicted;
+
             uint8_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
             inst->PredictedLdValue(ld_predict_val);
             DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC = %s with ld_val = %u\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
@@ -151,12 +158,14 @@ void LVPUnit::update(const DynInstPtr &inst)
 
 LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
     : statistics::Group(parent, "lvp"),
-      ADD_STAT(lookups, statistics::units::Count::get(),
-              "Number of LVP lookups"),
       ADD_STAT(ldvalPredicted, statistics::units::Count::get(),
                "Number of load values predicted"),
       ADD_STAT(ldvalIncorrect, statistics::units::Count::get(),
                "Number of load values incorrect"),
+      ADD_STAT(LCTLookups, statistics::units::Count::get(),
+               "Number of LCT lookups"),
+      ADD_STAT(LCTPredictable, statistics::units::Count::get(),
+               "Number of LCT lookups that were predictable"),
       ADD_STAT(LVPTLookups, statistics::units::Count::get(),
                "Number of LVPT lookups"),
       ADD_STAT(LVPTHits, statistics::units::Count::get(), "Number of LVPT hits"),

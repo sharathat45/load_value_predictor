@@ -208,12 +208,14 @@ class LVPUnit : public SimObject
     {
         LVPUnitStats(statistics::Group *parent);
 
-        /** Stat for number of LVP lookups. */
-        statistics::Scalar lookups;
         /** Stat for number of lds predicted. */
         statistics::Scalar ldvalPredicted;
         /** Stat for number of lds predicted incorrectly. */
         statistics::Scalar ldvalIncorrect;
+        /** Stat for number of LCT lookups. */
+        statistics::Scalar LCTLookups;
+        /** Stat for number of LCT predictable lookups. */
+        statistics::Scalar LCTPredictable;
         /** Stat for number of LVPT lookups. */
         statistics::Scalar LVPTLookups;
         /** Stat for number of LVPT hits. */
