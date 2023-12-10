@@ -226,15 +226,14 @@ class LVPUnit
     const unsigned instShiftAmt;
 
   private:
-      /** The LVPT. */
-      LVPT lvpt;
+    /** The LCT */
+    LCT lct;
 
-      /** The LCT */
-      LCT lct;
-
-  public: // Need to call CVU invalidation in iew.cc
-      /** The CVU */
-      CVU cvu;
+    /** The LVPT. */
+    LVPT lvpt;
+     
+    /** The CVU */
+    CVU cvu;
 };
 
 } // namespace o3

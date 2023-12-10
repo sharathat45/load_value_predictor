@@ -344,6 +344,8 @@ class IEW
     /** CPU pointer. */
     CPU *cpu;
 
+    LVPUnit *lvp_unit;
+
     /** Records if IEW has written to the time buffer this cycle, so that the
      * CPU can deschedule itself if there is no activity.
      */
@@ -351,6 +353,8 @@ class IEW
 
     /** Debug function to print instructions that are issued this cycle. */
     void printAvailableInsts();
+
+    bool ENABLE_LVP;
 
   public:
     /** Instruction queue. */
@@ -365,10 +369,6 @@ class IEW
      * IEW knows if there will be activity on the next cycle.
      */
     bool updateLSQNextCycle;
-
-  protected:
-    bool ENABLE_LVP;
-    LVPUnit *lvp_unit;
 
   private:
 
