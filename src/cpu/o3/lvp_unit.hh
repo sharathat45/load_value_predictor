@@ -52,6 +52,8 @@ class LVPUnit : public SimObject
      */
     void update(const DynInstPtr &inst);
 
+    bool cvu_invalidate(Addr instPC, Addr StdataAddr, ThreadID tid);
+
     /**
      * Squashes all outstanding updates until a given sequence number.
      * @param squashed_sn The sequence number to squash any younger updates up
@@ -225,15 +227,14 @@ class LVPUnit : public SimObject
     const unsigned instShiftAmt;
 
   private:
-      /** The LVPT. */
-      LVPT lvpt;
+    /** The LCT */
+    LCT lct;
 
-      /** The LCT */
-      LCT lct;
-
-  public: // Need to call CVU invalidation in iew.cc
-      /** The CVU */
-      CVU cvu;
+    /** The LVPT. */
+    LVPT lvpt;
+     
+    /** The CVU */
+    CVU cvu;
 };
 
 } // namespace o3

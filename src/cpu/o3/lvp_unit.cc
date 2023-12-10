@@ -27,7 +27,7 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
         lvpt(params.LVPTEntries,
             instShiftAmt,
             params.numThreads),
-        cvu(params.CVUnumEntries,
+        cvu(params.LVPTEntries, // set CVU to the same size as LVPT
             params.LVPTEntries, // for creating LVPT index
             instShiftAmt,
             params.numThreads),

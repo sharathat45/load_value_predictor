@@ -535,8 +535,7 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     {
         if(ENABLE_LVP == true)
         {
-            uint8_t ld_predict_val;
-            bool ld_predictible = lvp_unit->predict(inst);
+            lvp_unit->predict(inst);
         }
         else
         {

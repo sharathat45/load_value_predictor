@@ -414,6 +414,9 @@ class Fetch
     /** BPredUnit. */
     branch_prediction::BPredUnit *branchPred;
 
+    LVPUnit *lvp_unit;
+    bool ENABLE_LVP;
+
     std::unique_ptr<PCStateBase> pc[MaxThreads];
 
     Addr fetchOffset[MaxThreads];
@@ -530,8 +533,6 @@ class Fetch
     FinishTranslationEvent finishTranslationEvent;
 
   protected:
-    bool ENABLE_LVP;
-    LVPUnit *lvp_unit;
 
     struct FetchStatGroup : public statistics::Group
     {
