@@ -41,7 +41,9 @@ bool LVPUnit::predict(const DynInstPtr &inst)
 
     // ++stats.LCTLookups;
 
-    PCStateBase pc = inst->pcState();
+    ThreadID tid = inst->threadNumber;
+
+    const PCStateBase &pc = inst->pcState();
     uint8_t counter_val = lct.lookup(tid, pc.instAddr());
     bool is_predictible_ld = lct.getPrediction(counter_val);
     
@@ -80,7 +82,7 @@ void LVPUnit::update(const DynInstPtr &inst)
     //can use  effAddrValid()
 
     uint8_t mem_ld_value = *(inst->memData);
-    PCStateBase pc = inst->pcState();
+    const PCStateBase &pc = inst->pcState();
     ThreadID tid = inst->threadNumber;
 
 
@@ -115,7 +117,7 @@ void LVPUnit::update(const DynInstPtr &inst)
 
                 if (lct.lookup(tid, pc.instAddr()) == 3)
                 {
-                    cvu.update(pc.instAddr(), inst->effAddr(), mem_ld_value, tid);
+                    cvu.update(pc.instAddr(), inst->effAddr, mem_ld_value, tid);
                 }
             }
             else
@@ -127,7 +129,7 @@ void LVPUnit::update(const DynInstPtr &inst)
          }
     }
 
-    DPRINTF(LVPUnit, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, done_sn);
+    DPRINTF(LVPUnit, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, inst->seqNum);
     
     // while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
     //     // Update the LCT with the correct results.
