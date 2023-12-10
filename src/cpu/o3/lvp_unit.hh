@@ -31,7 +31,7 @@ class LVPUnit : public SimObject
 {
   public:
     
-    LVPUnit(const BaseO3CPUParams &params);
+    LVPUnit(CPU *_cpu, const BaseO3CPUParams &params);
 
     /** Perform sanity checks after a drain. */
     // void drainSanityCheck() const;

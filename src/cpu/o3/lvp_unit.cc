@@ -15,10 +15,11 @@ namespace gem5
 namespace o3
 {
 
-LVPUnit::LVPUnit(const BaseO3CPUParams &params)
+LVPUnit::LVPUnit(CPU *_cpu, const BaseO3CPUParams &params)
     : SimObject(params),
         numThreads(params.numThreads),
         // predHist(numThreads),
+        stats(_cpu),
         instShiftAmt(params.instShiftAmt),
         lct(params.LCTEntries,
             params.LCTCtrBits,
@@ -30,8 +31,7 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
         cvu(params.LVPTEntries, // set CVU to the same size as LVPT
             params.LVPTEntries, // for creating LVPT index
             instShiftAmt,
-            params.numThreads),
-        stats(this)
+            params.numThreads)
 {}
 
 
@@ -150,7 +150,7 @@ void LVPUnit::update(const DynInstPtr &inst)
 }
 
 LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
-    : statistics::Group(parent),
+    : statistics::Group(parent, "lvp"),
       ADD_STAT(lookups, statistics::units::Count::get(),
               "Number of LVP lookups"),
       ADD_STAT(ldvalPredicted, statistics::units::Count::get(),

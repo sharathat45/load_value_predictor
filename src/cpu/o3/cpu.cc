@@ -85,7 +85,7 @@ namespace o3
           instcount(0),
 #endif
           removeInstsThisCycle(false),
-          lvpunit(params),
+          lvpunit(this, params),
           fetch(this, params, &lvpunit),
           decode(this, params),
           rename(this, params),
