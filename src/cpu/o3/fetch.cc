@@ -147,6 +147,8 @@ Fetch::Fetch(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
 
     // Get the size of an instruction.
     instSize = decoder[0]->moreBytesSize();
+
+    ENABLE_LVP = params.enableLVP;
 }
 
 std::string Fetch::name() const { return cpu->name() + ".fetch"; }

@@ -117,6 +117,8 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
     updateLSQNextCycle = false;
 
     skidBufferMax = (renameToIEWDelay + 1) * params.renameWidth;
+
+    ENABLE_LVP = enableLVP;
 }
 
 std::string

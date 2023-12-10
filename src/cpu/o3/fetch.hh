@@ -530,7 +530,7 @@ class Fetch
     FinishTranslationEvent finishTranslationEvent;
 
   protected:
-    bool ENABLE_LVP = true;
+    bool ENABLE_LVP;
     LVPUnit *lvp_unit;
 
     struct FetchStatGroup : public statistics::Group

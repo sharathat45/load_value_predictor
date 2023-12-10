@@ -367,7 +367,7 @@ class IEW
     bool updateLSQNextCycle;
 
   protected:
-    bool ENABLE_LVP = true;
+    bool ENABLE_LVP;
     LVPUnit *lvp_unit;
 
   private:
