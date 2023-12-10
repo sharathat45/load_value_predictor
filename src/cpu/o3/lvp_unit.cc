@@ -16,7 +16,8 @@ namespace o3
 {
 
 LVPUnit::LVPUnit(const BaseO3CPUParams &params)
-    : numThreads(params.numThreads),
+    : SimObject(params),
+        numThreads(params.numThreads),
         // predHist(numThreads),
         instShiftAmt(params.instShiftAmt),
         lct(params.LCTEntries,
@@ -29,8 +30,8 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
         cvu(params.CVUnumEntries,
             params.LVPTEntries, // for creating LVPT index
             instShiftAmt,
-            params.numThreads)
-        // stats(this)
+            params.numThreads),
+        stats(this)
 {}
 
 
@@ -148,35 +149,24 @@ void LVPUnit::update(const DynInstPtr &inst)
     // }
 }
 
-/*
 LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
     : statistics::Group(parent),
       ADD_STAT(lookups, statistics::units::Count::get(),
-              "Number of BP lookups"),
-      ADD_STAT(condPredicted, statistics::units::Count::get(),
-               "Number of conditional branches predicted"),
-      ADD_STAT(condIncorrect, statistics::units::Count::get(),
-               "Number of conditional branches incorrect"),
+              "Number of LVP lookups"),
+      ADD_STAT(ldvalPredicted, statistics::units::Count::get(),
+               "Number of load values predicted"),
+      ADD_STAT(ldvalIncorrect, statistics::units::Count::get(),
+               "Number of load values incorrect"),
       ADD_STAT(LVPTLookups, statistics::units::Count::get(),
-               "Number of BTB lookups"),
-      ADD_STAT(LVPTHits, statistics::units::Count::get(), "Number of BTB hits"),
-      ADD_STAT(BTBHitRatio, statistics::units::Ratio::get(), "BTB Hit Ratio",
-               LVPTHits / LVPTLookups),
-      ADD_STAT(RASUsed, statistics::units::Count::get(),
-               "Number of times the RAS was used to get a target."),
-      ADD_STAT(RASIncorrect, statistics::units::Count::get(),
-               "Number of incorrect RAS predictions."),
-      ADD_STAT(indirectLookups, statistics::units::Count::get(),
-               "Number of indirect predictor lookups."),
-      ADD_STAT(indirectHits, statistics::units::Count::get(),
-               "Number of indirect target hits."),
-      ADD_STAT(indirectMisses, statistics::units::Count::get(),
-               "Number of indirect misses."),
-      ADD_STAT(indirectMispredicted, statistics::units::Count::get(),
-               "Number of mispredicted indirect branches.")
+               "Number of LVPT lookups"),
+      ADD_STAT(LVPTHits, statistics::units::Count::get(), "Number of LVPT hits"),
+      ADD_STAT(LVPTHitRatio, statistics::units::Ratio::get(), "LVPT Hit Ratio",
+               LVPTHits / LVPTLookups)
 {
-    BTBHitRatio.precision(6);
+    LVPTHitRatio.precision(6);
 }
+
+/*
 void LVPUnit::drainSanityCheck() const
 {
     // We shouldn't have any outstanding requests when we resume from a drained system.
