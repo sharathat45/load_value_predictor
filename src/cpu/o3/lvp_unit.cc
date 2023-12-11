@@ -26,7 +26,7 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
         lvpt(params.LVPTEntries,
             instShiftAmt,
             params.numThreads),
-        cvu(params.LVPTEntries, // set CVU to the same size as LVPT
+        cvu(256, // hardcode it for now
             params.LVPTEntries, // for creating LVPT index
             instShiftAmt,
             params.numThreads)
@@ -148,8 +148,25 @@ void LVPUnit::update(const DynInstPtr &inst)
     // }
 }
 
-bool LVPUnit::cvu_invalidate(Addr instPC, Addr StdataAddr, ThreadID tid) {
-    return cvu.invalidate(instPC,StdataAddr,tid);
+void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {
+    const PCStateBase &pc = inst->pcState();
+    Addr instPC = pc.instAddr();
+    Addr StdataAddr = inst->effAddr;
+    ThreadID tid = inst->threadNumber;
+    
+    //DPRINTF(LVPUnit,"LVPUnit::cvu_invalidate stdataAddr:%llu\n",StdataAddr);
+    cvu.invalidate(instPC,StdataAddr,tid);
+
+    return;
+}
+
+bool LVPUnit::cvu_valid(const DynInstPtr &inst) {
+    const PCStateBase &pc = inst->pcState();
+    Addr instPC = pc.instAddr();
+    Addr LwdataAddr = inst-> effAddr;
+    ThreadID tid = inst->threadNumber;
+
+    return cvu.valid(instPC,LwdataAddr,tid);
 }
 
 /*

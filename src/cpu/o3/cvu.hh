@@ -18,8 +18,8 @@ class CVU
     struct CVUEntry
     {
         /** The entry's tag. */
-        unsigned instr_idx = 0;
-        Addr data_addr = 0;
+        unsigned instr_idx;
+        Addr data_addr;
         
         /** The entry's thread id. */
         ThreadID tid;
@@ -28,7 +28,7 @@ class CVU
         uint8_t data;
 
         /** Whether or not the entry is valid. */
-        bool valid = false;
+        bool valid;
 
         unsigned char LRU;
     };
@@ -80,6 +80,7 @@ class CVU
 
     /** The actual CVU table. */
     std::vector<CVUEntry> cvu_table;
+    //CVUEntry cvu_table [256];
 
     /** The number of entries in the CVU Table. */
 

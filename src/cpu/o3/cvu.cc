@@ -20,6 +20,11 @@ CVU::CVU(unsigned _numEntries, unsigned _lvptnumentries, unsigned _instShiftAmt,
 
     for (unsigned i = 0; i < numEntries; ++i) {
         cvu_table[i].valid = false;
+        cvu_table[i].instr_idx = 0;
+        cvu_table[i].data_addr = 0;
+        cvu_table[i].tid = 0;
+        cvu_table[i].data = 0;
+        cvu_table[i].LRU = 0;
     }
 
     idxMask = LVPTnumEntries - 1;
@@ -59,8 +64,6 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
 {
     unsigned instr_idx = getIndex(instPC, tid);
 
-    assert(instr_idx < numEntries);
-
     for (unsigned i = 0;i < numEntries; ++i){
         if (cvu_table[i].valid
             && LwdataAddr == cvu_table[i].data_addr
@@ -82,18 +85,22 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
 // entry was found.
 bool CVU::invalidate(Addr instPC, Addr StdataAddr, ThreadID tid)
 {   
-    unsigned instr_idx = getIndex(instPC, tid);
+    // DPRINTF(LVPUnit,"CVU::Invalidation\n");
+    // DPRINTF(LVPUnit,"CVU::cvu_table[%d].valid = %d, cvu_table[%d].daddr = %d \n", cvu_table[0].valid,cvu_table[0].data_addr);
+    // DPRINTF(LVPUnit,"CVU::Invalidation after table call\n");
+    int index;
 
-    assert(instr_idx < numEntries);
-    
-    for (unsigned i = 0;i < numEntries; ++i){
-        if (cvu_table[i].valid
-            && StdataAddr == cvu_table[i].data_addr) {
-                cvu_table[i].valid = false;
-                cvu_table[i].data_addr = 0;
-                cvu_table[i].instr_idx = 0;
-                cvu_table[i].LRU = 0;
-                cvu_table[i].tid = 0;
+    for (index = 0; index < numEntries; index++){
+        // DPRINTF(LVPUnit,"cvu iteration\n");
+        // printf("cvu iteration normal print %d\n", index);
+        // fflush(stdout);
+        if (cvu_table[index].valid
+            && StdataAddr == cvu_table[index].data_addr) {
+                cvu_table[index].valid = false;
+                cvu_table[index].data_addr = 0;
+                cvu_table[index].instr_idx = 0;
+                cvu_table[index].LRU = 0;
+                cvu_table[index].tid = 0;
                 return true;
             }
     }
@@ -125,7 +132,7 @@ inline void CVU::replacement(unsigned instr_idx, Addr data_addr, uint8_t data, T
     cvu_table[LRU_idx].LRU = 0;
     LRU_update(LRU_idx);
 
-    //DPRINTF(LVPUnit, "CVU LRU replacement table entry [%d]: %d -> %d", LRU_idx, old_data_addr, data_addr);
+    DPRINTF(LVPUnit, "CVU LRU replacement table entry [%d]: %d -> %d", LRU_idx, old_data_addr, data_addr);
 
     return;
 }
@@ -134,7 +141,7 @@ void CVU::update(Addr instPc, Addr data_addr, uint8_t data, ThreadID tid)
 {
     unsigned instr_idx = getIndex(instPc, tid);
 
-    assert(instr_idx < numEntries);
+    //assert(instr_idx < numEntries);
     
     for (unsigned i = 0; i < numEntries; ++i) {
         if (cvu_table[i].valid == false) {

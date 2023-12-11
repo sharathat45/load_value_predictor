@@ -52,7 +52,9 @@ class LVPUnit
      */
     void update(const DynInstPtr &inst);
 
-    bool cvu_invalidate(Addr instPC, Addr StdataAddr, ThreadID tid);
+    void cvu_invalidate(const DynInstPtr &inst);
+
+    bool cvu_valid(const DynInstPtr &inst);
 
     /**
      * Squashes all outstanding updates until a given sequence number.
