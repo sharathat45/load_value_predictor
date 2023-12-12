@@ -61,8 +61,7 @@ uint8_t LVPT::lookup(Addr loadAddr, ThreadID tid)
 {
     unsigned lvpt_idx = getIndex(loadAddr, tid);
 
-    DPRINTF(LVPUnit, "LVPT: Looking up 0x%x (idx %u) "
-            "for tid %u... ", loadAddr, lvpt_idx, tid);
+    DPRINTF(LVPUnit, "LVPT: Looking up 0x%x (idx %u) for tid %u\n", loadAddr, lvpt_idx, tid);
 
     assert(lvpt_idx < numEntries);
 
@@ -72,7 +71,7 @@ uint8_t LVPT::lookup(Addr loadAddr, ThreadID tid)
         return value;
     } else {
         DPRINTF(LVPUnit, "no valid pred found\n");
-        return 0xBAD1BAD1;
+        return 0xDD;
     }
 }
 
@@ -80,8 +79,7 @@ void LVPT::update(Addr loadAddr, uint8_t loadValue, ThreadID tid)
 {
     unsigned lvpt_idx = getIndex(loadAddr, tid);
 
-    DPRINTF(LVPUnit, "LVPT: Updating 0x%x (idx %u) for tid %u "
-            "with 0x%x\n", loadAddr, lvpt_idx, tid, loadValue);
+    DPRINTF(LVPUnit, "LVPT: Updating 0x%x (idx %u) for tid %u with 0x%x\n", loadAddr, lvpt_idx, tid, loadValue);
 
     assert(lvpt_idx < numEntries);
 

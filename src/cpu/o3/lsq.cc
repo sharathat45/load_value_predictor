@@ -58,6 +58,8 @@
 #include "debug/Writeback.hh"
 #include "params/BaseO3CPU.hh"
 
+#include "debug/LVPUnit.hh"
+
 namespace gem5
 {
 
@@ -779,6 +781,7 @@ LSQ::dumpInsts(ThreadID tid) const
     thread.at(tid).dumpInsts();
 }
 
+
 Fault
 LSQ::pushRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
         unsigned int size, Addr addr, Request::Flags flags, uint64_t *res,
@@ -806,7 +809,7 @@ LSQ::pushRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
     const bool tlbi_cmd = isLoad && (flags & Request::TLBI_CMD);
 
     if (inst->translationStarted()) {
-        request = inst->savedRequest;
+        request = inst->savedRequest; //TLB miss, page table walk in progress
         assert(request);
     } else {
         if (htm_cmd || tlbi_cmd) {
@@ -844,9 +847,38 @@ LSQ::pushRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
             }
             Fault fault;
             if (isLoad)
-                fault = read(request, inst->lqIdx);
+            {
+                // fault = read(request, inst->lqIdx);
+                
+                // If the load is still constant, then we can skip the memory access
+                if (ENABLE_LVP == true && inst->readLdConstant() == true)
+                {
+                    if(lvp_unit->cvu_valid(inst))
+                    {
+                        fault = NoFault;
+                        *(inst->memData) = inst->PredictedLdValue();
+
+                        DPRINTF(LVPUnit, "LSQ: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u actualVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
+                                tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), *(inst->memData), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
+                    }
+                    else
+                    {
+                        fault = read(request, inst->lqIdx);
+                    }   
+
+                    // inst->setExecuted();
+                    // inst->fault = NoFault;
+                    // instToCommit(inst);
+                }
+                else
+                {
+                    fault = read(request, inst->lqIdx);
+                }
+            }            
             else
+            {
                 fault = write(request, data, inst->sqIdx);
+            }
             // inst->getFault() may have the first-fault of a
             // multi-access split request at this point.
             // Overwrite that only if we got another type of fault

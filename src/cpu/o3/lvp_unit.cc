@@ -72,7 +72,6 @@ bool LVPUnit::predict(const DynInstPtr &inst)
             return false;
         }
     }
-
     return is_predictible_ld;
 }
 
@@ -84,10 +83,8 @@ void LVPUnit::update(const DynInstPtr &inst)
     const PCStateBase &pc = inst->pcState();
     ThreadID tid = inst->threadNumber;
 
-
-    DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC = %s data_addr:%llu ld_val:%u \n",
-         inst->threadNumber, inst->seqNum, inst->pcState(), *(inst->memData), inst->effAddr);
-
+    DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:%llu data_addr:%llu ld_val:%u \n",
+            inst->threadNumber, inst->seqNum, pc.instAddr(), inst->effAddr, *(inst->memData));
 
     bool valid_entry = lvpt.valid(pc.instAddr(), tid);
 
@@ -104,8 +101,8 @@ void LVPUnit::update(const DynInstPtr &inst)
 
         if (lvpt_ld_value != pred_ld_value)
         {
-            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC = %s **** LVPT ENTRY != PREDICTED VALUE *** lvpt_ld_value:%u pred_ld_value:%u  mem_ld_value=%u\n",
-                    inst->threadNumber, inst->seqNum, inst->pcState(), lvpt_ld_value, pred_ld_value, mem_ld_value);
+            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:%llu **** LVPT ENTRY != PREDICTED VALUE *** lvpt_ld_value:%u pred_ld_value:%u  mem_ld_value=%u\n",
+                    inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
         }
         else
         {

@@ -536,6 +536,8 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
         if(ENABLE_LVP == true)
         {
             lvp_unit->predict(inst);
+            DPRINTF(LVPUnit, "Fetch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d  predVal:%u\n",
+                    tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue());
         }
         else
         {

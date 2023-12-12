@@ -60,6 +60,8 @@
 #include "mem/port.hh"
 #include "sim/sim_object.hh"
 
+#include "cpu/o3/lvp_unit.hh"
+
 namespace gem5
 {
 
@@ -891,6 +893,14 @@ class LSQ
 
     RequestPort &getDataPort() { return dcachePort; }
 
+    LVPUnit* lvp_unit;
+    bool ENABLE_LVP = false;
+    void update_lsq_lvp(LVPUnit *lvpunit, bool enable_lvp)
+    {
+        lvp_unit = lvpunit;
+        ENABLE_LVP = enable_lvp;
+    }
+
   protected:
     /** D-cache is blocked */
     bool _cacheBlocked;
@@ -956,6 +966,7 @@ class LSQ
 
     /** Number of Threads. */
     ThreadID numThreads;
+
 };
 
 } // namespace o3

@@ -399,8 +399,7 @@ DynInst::trap(const Fault &fault)
 }
 
 Fault
-DynInst::initiateMemRead(Addr addr, unsigned size, Request::Flags flags,
-                               const std::vector<bool> &byte_enable)
+DynInst::initiateMemRead(Addr addr, unsigned size, Request::Flags flags, const std::vector<bool> &byte_enable)
 {
     assert(byte_enable.size() == size);
     return cpu->pushRequest(

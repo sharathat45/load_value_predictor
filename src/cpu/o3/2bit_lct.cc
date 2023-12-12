@@ -39,7 +39,7 @@ uint8_t LCT::lookup(ThreadID tid, Addr inst_addr)
 {
     unsigned lct_idx = getLocalIndex(inst_addr);
 
-    DPRINTF(LVPUnit, "LCT: PC = %llu Looking up index %#x\n", inst_addr, lct_idx);
+    DPRINTF(LVPUnit, "LCT: Looking up 0x%x (idx %u) for tid %u\n", inst_addr, lct_idx, tid);
 
     uint8_t counter_val = lctCtrs[lct_idx];
 
@@ -64,17 +64,17 @@ void LCT::update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squ
     // Update the local predictor.
     lct_idx = getLocalIndex(inst_addr);
 
-    DPRINTF(LVPUnit, "LCT: PC = %llu Looking up index %#x\n", inst_addr, lct_idx);
+    DPRINTF(LVPUnit, "LCT: Updating 0x%x (idx %u) for tid %u with pred outcome:%d\n", inst_addr, lct_idx, tid, prediction_outcome);
 
     if (prediction_outcome)
     {
         lctCtrs[lct_idx]++;
-        DPRINTF(LVPUnit, "LCT: PC = %llu ld ins address updated ++\n", inst_addr);
+        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated ++\n", inst_addr);
     }
     else
     {
         lctCtrs[lct_idx]--;
-        DPRINTF(LVPUnit, "LCT: PC = %llu ld ins address updated --\n", inst_addr);
+        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated --\n", inst_addr);
     }
 }
 

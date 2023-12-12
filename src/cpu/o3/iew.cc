@@ -932,20 +932,17 @@ void IEW::dispatchInsts(ThreadID tid)
            
             DPRINTF(IEW, "[tid:%i] Issue: Memory instruction encountered, adding to LSQ.\n", tid);
 
+            // Reserve a spot in the load store queue for this
+            // memory access.
+            ldstQueue.insertLoad(inst);
+
+
             // If the load is constant, then we can skip the memory access
             if (ENABLE_LVP == true)
             {
-                if (inst->readLdConstant() == false)
-                {
-                    // Reserve a spot in the load store queue for this
-                    // memory access.
-                    ldstQueue.insertLoad(inst);
-                }
-                else
-                {
-                    DPRINTF(LVPUnit, "Issue: [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
-                            tid, inst->seqNum, inst->pcState(), inst->memOpDone(), inst->isInLSQ());                
-                }
+                ldstQueue.update_lsq_lvp(lvp_unit, ENABLE_LVP);
+                DPRINTF(LVPUnit, "Dispatch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u isInLSQ:%d constantld:%d \n",
+                        tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->isInLSQ(), inst->readLdConstant());
             }
             else{
                 // Reserve a spot in the load store queue for this
@@ -1153,45 +1150,38 @@ void IEW::executeInsts()
 
                 // initiateMemRead(Addr addr, unsigned size, Request::Flags flags, const std::vector<bool> &byte_enable)
 
-                // If the load is still constant, then we can skip the memory access
-                if (ENABLE_LVP == true && inst->readLdConstant() == true && lvp_unit->cvu_valid(inst))
+                // Loads will mark themselves as executed, and their writeback
+                // event adds the instruction to the queue to commit
+                fault = ldstQueue.executeLoad(inst);
+
+                if (inst->isTranslationDelayed() && fault == NoFault)
                 {
-                    inst->setExecuted();
+                    // A hw page table walk is currently going on; the
+                    // instruction must be deferred.
+                    DPRINTF(IEW, "Execute: Delayed translation, deferring load.\n");
+                    instQueue.deferMemInst(inst);
+                    continue;
+                }
+
+                if (inst->isDataPrefetch() || inst->isInstPrefetch())
+                {
                     inst->fault = NoFault;
-                    instToCommit(inst);
-                    
-
-
-                    DPRINTF(LVPUnit, "EX: Constant ld [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
-                            inst->threadNumber, inst->seqNum, inst->pcState(), inst->memOpDone(), inst->isInLSQ());
                 }
-                else
-                {
-                    // Loads will mark themselves as executed, and their writeback
-                    // event adds the instruction to the queue to commit
-                    fault = ldstQueue.executeLoad(inst);
-
-                    if (inst->isTranslationDelayed() && fault == NoFault)
-                    {
-                        // A hw page table walk is currently going on; the
-                        // instruction must be deferred.
-                        DPRINTF(IEW, "Execute: Delayed translation, deferring load.\n");
-                        instQueue.deferMemInst(inst);
-                        continue;
-                    }
-
-                    if (inst->isDataPrefetch() || inst->isInstPrefetch())
-                    {
-                        inst->fault = NoFault;
-                    }
-                }
+                
                     
             } else if (inst->isStore()) {
                 fault = ldstQueue.executeStore(inst);
 
-                // should invalidate right after execute
-                // wait until commit will be late
-                lvp_unit -> cvu_invalidate(inst);
+                if (ENABLE_LVP == true)
+                {
+                    // should invalidate right after execute
+                    // wait until commit will be late
+                    lvp_unit->cvu_invalidate(inst);
+
+                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%u SW instruction\n",
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr);
+                }
+                
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {
@@ -1371,22 +1361,13 @@ void IEW::writebackInsts()
 
             if (ENABLE_LVP == true && inst->isLoad())
             {
-                if (inst->readLdConstant() == true)
+                if (inst->memOpDone() && inst->memData != nullptr && inst->readLdConstant() == false)
                 {
-                    DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
-                            inst->threadNumber, inst->seqNum, inst->pcState(), inst->memOpDone(), inst->isInLSQ());
+                    lvp_unit->update(inst);
                 }
-                else
-                {
-                    if (inst->memOpDone()  && inst->memData != nullptr)
-                    {
-                        // update the load value Predictor 
-                        lvp_unit->update(inst);
-                        DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC = %s data_addr:%llu ld_val:%u \n",
-                                inst->threadNumber, inst->seqNum, inst->pcState(), inst->effAddr, *(inst->memData));
 
-                    }
-                }
+                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
+                        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
             }
 
             for (int i = 0; i < inst->numDestRegs(); i++) {
