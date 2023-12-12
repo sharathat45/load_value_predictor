@@ -25,7 +25,7 @@ namespace o3
 {
 
 /**
- * Basically a wrapper class to hold LCT, LVPT and CVT
+ * Basically a wrapper class to hold LCT, LVPT and CVU
  */
 class LVPUnit : public SimObject
 {
@@ -74,137 +74,11 @@ class LVPUnit : public SimObject
      * @param tid The thread id.
      */
     // void squash(const InstSeqNum &squashed_sn, const uint8_t &corr_ldval, bool actually_predictible, ThreadID tid);
-
-    /**
-     * @param ld_history Pointer to the history object.  The predictor
-     * will need to update any state and delete the object.
-     */
-    // virtual void squash(ThreadID tid, void *ld_history) = 0;
-
-    /**
-     * Looks up a given PC in the BP to see if it is taken or not taken.
-     * @param ld_addr The PC to look up.
-     * @param ld_history Pointer that will be set to an object that
-     * has the branch predictor state associated with the lookup.
-     * @return Whether the branch is taken or not taken.
-     */
-    // virtual bool lookup(ThreadID tid, Addr ld_addr, void *&ld_history) = 0;
-
-    /**
-     * If a ld is not predictible, because the LVPT address is invalid or missing,
-     * this function sets the appropriate counter in the global and local
-     * predictors to not predictible.
-     * @param inst_PC The PC to look up the local predictor.
-     * @param ld_history Pointer that will be set to an object that
-     * has the ld predictor state associated with the lookup.
-     */
-    // virtual void lvptUpdate(ThreadID tid, Addr ld_addr, void *&ld_history) = 0;
-
-    /**
-     * Looks up a given ld ins addr in the LVPT to see if a matching entry exists.
-     * @param inst_PC The PC to look up.
-     * @return Whether the LVPT contains the given PC.
-     */
-    // bool LVPTValid(Addr instPC) { return LVPT.valid(instPC, 0); }
-
-    /**
-     * Looks up a given PC in the LVPT to get the predicted ld value. The PC may
-     * be changed or deleted in the future, so it needs to be used immediately,
-     * and/or copied for use later.
-     * @param inst_PC The PC to look up.
-     * @return The ld value.
-     */
-    // const uint8_t * LVPTLookup(Addr inst_pc)
-    // {
-    //     return LVPT.lookup(inst_pc, 0);
-    // }
-
-    /**
-     * Updates the LCT with predictible/not  information.
-     * @param inst_PC The ld PC that will be updated.
-     * @param predictible Whether the ld was predictible or not.
-     * @param ld_history Pointer to the ld predictor state that is
-     * associated with the ld lookup that is being updated.
-     * @param squashed Set to true when this function is called during a
-     * squash operation.
-     * @param inst Static instruction information
-     * @param ldval The actual ld value(only needed for squashed lds)
-     * @todo Make this update flexible enough to handle a global predictor.
-     */
-    // virtual void update(ThreadID tid, Addr ld_addr, bool predictible, void *ld_history, bool squashed, const StaticInstPtr &inst, Addr ldval) = 0;
-
-    /**
-     * Updates the LVPT with the ldval of a ld ins.
-     * @param inst_PC The ld ins PC that will be updated.
-     * @param ldval The ld value that will be added to the LVPT.
-     */
-    // void LVPTUpdate(Addr instPC, const uint8_t &ldval)
-    // {
-    //     LVPT.update(instPC, target, 0);
-    // }
-
+        
     // void dump();
 
   private:
-    //   struct PredictorHistory
-    //   {
-    //       /**
-    //        * Makes a predictor history struct that contains any
-    //        * information needed to update the LCT and LVPT
-    //        */
-    //       PredictorHistory(const InstSeqNum &seq_num, Addr instPC, bool pred_predictible_ld, void *ld_history, ThreadID _tid, const StaticInstPtr &inst)
-    //           : seqNum(seq_num), pc(instPC), ldHistory(ld_history), tid(_tid), predPredictible(pred_predictible_ld), inst(inst)
-    //       {
-    //       }
-
-    //       PredictorHistory(const PredictorHistory &other) : seqNum(other.seqNum), pc(other.pc), ldHistory(other.ldHistory),
-    //                                                         tid(other.tid), predPredictible(other.predPredictible),
-    //                                                         ldval(other.ldval), inst(other.inst)
-    //       {
-    //       }
-
-    //       bool
-    //       operator==(const PredictorHistory &entry) const
-    //       {
-    //           return this->seqNum == entry.seqNum;
-    //       }
-
-    //       /** The sequence number for the predictor history entry. */
-    //       InstSeqNum seqNum;
-
-    //       /** The PC associated with the sequence number. */
-    //       Addr pc;
-
-    //       /** Pointer to the history object passed back from the ld
-    //        * predictor.  It is used to update or restore state of the
-    //        * ld predictor.
-    //        */
-    //       void *ldHistory = nullptr;
-
-    //       /** The thread id. */
-    //       ThreadID tid;
-
-    //       /** Whether or not it was predictible ld. */
-    //       bool predPredictible;
-
-    //       /** ld value of the ld ins, First it is predicted, and fixed later if necessary*/
-    //       Addr ldval = MaxAddr;
-
-    //       /** The ld instrction */
-    //       const StaticInstPtr inst;
-    //   };
-
-    //   typedef std::deque<PredictorHistory> History;
-
-    /** Number of the threads for which the branch history is maintained. */
     const unsigned numThreads;
-
-    /**
-     * The per-thread predictor history. This is used to update the predictor
-     * as instructions are committed, or restore it to the proper state after
-     * a squash.
-     */
-    //   std::vector<History> predHist;
 
     struct LVPUnitStats : public statistics::Group
     {

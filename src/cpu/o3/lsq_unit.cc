@@ -55,6 +55,7 @@
 #include "debug/O3PipeView.hh"
 #include "mem/packet.hh"
 #include "mem/request.hh"
+#include "debug/LVPUnit.hh"
 
 namespace gem5
 {
@@ -202,8 +203,11 @@ LSQUnit::LSQUnit(uint32_t lqEntries, uint32_t sqEntries)
 
 void
 LSQUnit::init(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params,
-        LSQ *lsq_ptr, unsigned id)
+        LSQ *lsq_ptr, unsigned id, LVPUnit *lvpunit)
 {
+    lvp_unit = lvpunit;
+    ENABLE_LVP = params.enableLVP;
+
     lsqID = id;
 
     cpu = cpu_ptr;

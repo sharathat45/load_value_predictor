@@ -70,7 +70,7 @@ LSQ::DcachePort::DcachePort(LSQ *_lsq, CPU *_cpu) :
     RequestPort(_cpu->name() + ".dcache_port", _cpu), lsq(_lsq), cpu(_cpu)
 {}
 
-LSQ::LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params)
+LSQ::LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params, LVPUnit *lvpunit)
     : cpu(cpu_ptr), iewStage(iew_ptr),
       _cacheBlocked(false),
       cacheStorePorts(params.cacheStorePorts), usedStorePorts(0),
@@ -85,9 +85,12 @@ LSQ::LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params)
       maxSQEntries(maxLSQAllocation(lsqPolicy, SQEntries, params.numThreads,
                   params.smtLSQThreshold)),
       dcachePort(this, cpu_ptr),
-      numThreads(params.numThreads)
+      numThreads(params.numThreads),
+      lvp_unit(lvpunit)  
 {
     assert(numThreads > 0 && numThreads <= MaxThreads);
+
+    ENABLE_LVP = params.enableLVP;
 
     //**********************************************
     //************ Handle SMT Parameters ***********
@@ -116,7 +119,7 @@ LSQ::LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params)
     thread.reserve(numThreads);
     for (ThreadID tid = 0; tid < numThreads; tid++) {
         thread.emplace_back(maxLQEntries, maxSQEntries);
-        thread[tid].init(cpu, iew_ptr, params, this, tid);
+        thread[tid].init(cpu, iew_ptr, params, this, tid, lvp_unit);
         thread[tid].setDcachePort(&dcachePort);
     }
 }
@@ -858,7 +861,7 @@ LSQ::pushRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
                         fault = NoFault;
                         // *(inst->memData) = inst->PredictedLdValue();
 
-                        // fault = read(request, inst->lqIdx);
+                        fault = read(request, inst->lqIdx);
 
                         DPRINTF(LVPUnit, "LSQ: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u actualVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
                                 tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), *(inst->memData), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());

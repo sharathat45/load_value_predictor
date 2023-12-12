@@ -663,7 +663,7 @@ class LSQ
     };
 
     /** Constructs an LSQ with the given parameters. */
-    LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params);
+    LSQ(CPU *cpu_ptr, IEW *iew_ptr, const BaseO3CPUParams &params, LVPUnit *lvpunit);
 
     /** Returns the name of the LSQ. */
     std::string name() const;
@@ -894,13 +894,8 @@ class LSQ
     RequestPort &getDataPort() { return dcachePort; }
 
     LVPUnit* lvp_unit;
-    bool ENABLE_LVP = false;
-    void update_lsq_lvp(LVPUnit *lvpunit, bool enable_lvp)
-    {
-        lvp_unit = lvpunit;
-        ENABLE_LVP = enable_lvp;
-    }
-
+    bool ENABLE_LVP;
+    
   protected:
     /** D-cache is blocked */
     bool _cacheBlocked;

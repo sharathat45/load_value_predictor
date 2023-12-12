@@ -28,7 +28,7 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
       cpu(_cpu),
       lvp_unit(lvpunit),
       instQueue(_cpu, this, params),
-      ldstQueue(_cpu, this, params),
+      ldstQueue(_cpu, this, params, lvp_unit),
       fuPool(params.fuPool),
       commitToIEWDelay(params.commitToIEWDelay),
       renameToIEWDelay(params.renameToIEWDelay),
@@ -939,7 +939,6 @@ void IEW::dispatchInsts(ThreadID tid)
             // If the load is constant, then we can skip the memory access
             if (ENABLE_LVP == true)
             {
-                ldstQueue.update_lsq_lvp(lvp_unit, ENABLE_LVP);
                 DPRINTF(LVPUnit, "Dispatch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u isInLSQ:%d constantld:%d \n",
                         tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->isInLSQ(), inst->readLdConstant());
             }

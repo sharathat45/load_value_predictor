@@ -63,10 +63,6 @@ bool LVPUnit::predict(const DynInstPtr &inst)
         ++stats.LVPTLookups;
 
         inst -> setLdPredictible(true);
-<<<<<<< HEAD
-        if (counter_val == 3)
-        { inst->setLdConstant(true); } 
-=======
         inst -> setLdConstant(counter_val == 3);
 
         if (lvpt.valid(pc.instAddr(), tid))
@@ -79,7 +75,6 @@ bool LVPUnit::predict(const DynInstPtr &inst)
             DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC = %s with ld_val = %u\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
             return true;
         }
->>>>>>> lvp_stats
         else
         { inst->setLdConstant(false); }
 
@@ -164,7 +159,6 @@ void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {
     return;
 }
 
-<<<<<<< HEAD
 bool LVPUnit::cvu_valid(const DynInstPtr &inst) {
     const PCStateBase &pc = inst->pcState();
     Addr instPC = pc.instAddr();
@@ -174,9 +168,7 @@ bool LVPUnit::cvu_valid(const DynInstPtr &inst) {
     return cvu.valid(instPC,LwdataAddr,tid);
 }
 
-/*
-=======
->>>>>>> lvp_stats
+
 LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
     : statistics::Group(parent, "lvp"),
       ADD_STAT(ldvalPredicted, statistics::units::Count::get(),
