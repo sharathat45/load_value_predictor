@@ -51,19 +51,16 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     
     if (is_predictible_ld == false) 
     {
-        DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu]  PC:0x%x Not Predictible %\n", inst->threadNumber, inst->seqNum, pc.instAddr());
-
         inst -> setLdPredictible(false);
         inst -> setLdConstant(false);
         inst -> PredictedLdValue(0);
+
+        DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu]  PC:0x%x Not Predictible \n", inst->threadNumber, inst->seqNum, pc.instAddr());
         return false;
     }
     else
     {   
         ++stats.LVPTLookups;
-
-        inst -> setLdPredictible(true);
-        inst -> setLdConstant(counter_val == 3);
 
         if (lvpt.valid(pc.instAddr(), tid))
         {
@@ -72,25 +69,21 @@ bool LVPUnit::predict(const DynInstPtr &inst)
 
             uint64_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
             inst->PredictedLdValue(ld_predict_val);
-            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC = %s with ld_val = %u\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
+            inst -> setLdConstant(counter_val == 3);
+            inst -> setLdPredictible(true);
+    
+            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] PC = %s ld_val = %llu LVP predicted predictible\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
             return true;
         }
-        else
-        { inst->setLdConstant(false); }
+        else       
+        {
+            inst -> PredictedLdValue(0);
+            inst -> setLdConstant(false);
+            inst -> setLdPredictible(false);
 
-            if (lvpt.valid(pc.instAddr(), tid))
-            {
-                uint64_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
-                inst->PredictedLdValue(ld_predict_val);
-                DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC:0x%x with ld_val = %u\n", inst->threadNumber, inst->seqNum, pc.instAddr(), ld_predict_val);
-                return true;
-            }
-            else
-            {
-                DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] **** LVPT and LCT outcome not matching **** PC:0x%x \n", tid, inst->seqNum, pc.instAddr());
-                inst->PredictedLdValue(0);
-                return false;
-            }
+            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] PC:0x%x **** LVPT and LCT outcome not matching **** \n", tid, inst->seqNum, pc.instAddr());
+            return false;
+        }
 
         return true;
     }
@@ -104,15 +97,15 @@ void LVPUnit::update(const DynInstPtr &inst)
     const PCStateBase &pc = inst->pcState();
     ThreadID tid = inst->threadNumber;
 
-    DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x data_addr:%llu ld_val:%u \n",
-            inst->threadNumber, inst->seqNum, pc.instAddr(), inst->effAddr, *(inst->memData));
 
     bool valid_entry = lvpt.valid(pc.instAddr(), tid);
 
     if (!valid_entry)
     {
+        DPRINTF(LVPUnit, "lvp_fresh_add: [tid:%i] [sn:%llu] PC:0x%x data_addr:%llu ld_val:%u \n",
+            inst->threadNumber, inst->seqNum, pc.instAddr(), inst->effAddr, *(inst->memData));
+
         lvpt.update(pc.instAddr(), mem_ld_value, tid);
-        //make the counter to not predictible (00) => not predictible (01)
         lct.update(tid, pc.instAddr(), true, false);
     }
     else
@@ -122,11 +115,14 @@ void LVPUnit::update(const DynInstPtr &inst)
 
         if (lvpt_ld_value != pred_ld_value)
         {
-            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x **** LVPT ENTRY != PREDICTED VALUE *** lvpt_ld_value:%u pred_ld_value:%u  mem_ld_value=%u\n",
+            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:%llu pred_ld_value:%llu  mem_ld_value=%llu **** LVPT ENTRY != PREDICTED VALUE ***\n",
                     inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
         }
         else
         {
+            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:%llu pred_ld_value:%llu  mem_ld_value=%llu LVPT ENTRY == PREDICTED VALUE\n",
+                    inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
+    
             if (pred_ld_value == mem_ld_value)
             {
                 // make the counter to predictible

@@ -939,7 +939,7 @@ void IEW::dispatchInsts(ThreadID tid)
             // If the load is constant, then we can skip the memory access
             if (ENABLE_LVP == true)
             {
-                DPRINTF(LVPUnit, "Dispatch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u isInLSQ:%d constantld:%d \n",
+                DPRINTF(LVPUnit, "Dispatch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu isInLSQ:%d constantld:%d \n",
                         tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->isInLSQ(), inst->readLdConstant());
             }
             else{
@@ -1176,7 +1176,7 @@ void IEW::executeInsts()
                     // wait until commit will be late
                     lvp_unit->cvu_invalidate(inst);
 
-                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%u SW instruction\n",
+                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%llu SW instruction\n",
                             inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr);
                 }
                 
@@ -1364,7 +1364,7 @@ void IEW::writebackInsts()
                     lvp_unit->update(inst);
                 }
 
-                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
+                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu data_Addr:%llu isInLSQ:%d constantld:%d \n",
                         inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
             }
 

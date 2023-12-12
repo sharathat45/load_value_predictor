@@ -79,7 +79,7 @@ void LVPT::update(Addr loadAddr, uint64_t loadValue, ThreadID tid)
 {
     unsigned lvpt_idx = getIndex(loadAddr, tid);
 
-    DPRINTF(LVPUnit, "LVPT: Updating 0x%x (idx %u) for tid %u with 0x%x\n", loadAddr, lvpt_idx, tid, loadValue);
+    DPRINTF(LVPUnit, "LVPT: Updating 0x%x (idx %u) for tid %u with %llu\n", loadAddr, lvpt_idx, tid, loadValue);
 
     assert(lvpt_idx < numEntries);
 
