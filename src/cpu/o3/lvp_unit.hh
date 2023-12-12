@@ -88,6 +88,8 @@ class LVPUnit : public SimObject
         statistics::Scalar ldvalPredicted;
         /** Stat for number of lds predicted incorrectly. */
         statistics::Scalar ldvalIncorrect;
+        /** Stat for fraction of predicted lds predicted correctly. */
+        statistics::Formula ldvalAccuracy;
         /** Stat for number of LCT lookups. */
         statistics::Scalar LCTLookups;
         /** Stat for number of LCT predictable lookups. */

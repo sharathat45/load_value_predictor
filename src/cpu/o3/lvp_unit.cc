@@ -142,6 +142,8 @@ void LVPUnit::update(const DynInstPtr &inst)
                 // make the counter to not predictible
                 lct.update(tid, pc.instAddr(), false, false);
                 lvpt.update(pc.instAddr(), mem_ld_value, tid);
+
+                stats.ldvalIncorrect++;
             }
          }
     }
@@ -175,6 +177,9 @@ LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
                "Number of load values predicted"),
       ADD_STAT(ldvalIncorrect, statistics::units::Count::get(),
                "Number of load values incorrect"),
+      ADD_STAT(ldvalAccuracy, statistics::units::Ratio::get(),
+               "Fraction of predicted load values that were correctly predicted",
+               (ldvalPredicted - ldvalIncorrect) / ldvalPredicted),
       ADD_STAT(LCTLookups, statistics::units::Count::get(),
                "Number of LCT lookups"),
       ADD_STAT(LCTPredictable, statistics::units::Count::get(),
