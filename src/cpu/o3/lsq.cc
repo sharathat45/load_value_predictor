@@ -849,36 +849,10 @@ LSQ::pushRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
                 inst->reqToVerify = std::make_shared<Request>(*request->req());
             }
             Fault fault;
+
             if (isLoad)
-            {
-                // fault = read(request, inst->lqIdx);
-                
-                // If the load is still constant, then we can skip the memory access
-                if (ENABLE_LVP == true && inst->readLdConstant() == true)
-                {
-                    if(lvp_unit->cvu_valid(inst))
-                    {
-                        fault = NoFault;
-                        // *(inst->memData) = inst->PredictedLdValue();
-
-                        fault = read(request, inst->lqIdx);
-
-                        DPRINTF(LVPUnit, "LSQ: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u actualVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
-                                tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), *(inst->memData), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
-                    }
-                    else
-                    {
-                        fault = read(request, inst->lqIdx);
-                    }   
-
-                    // inst->setExecuted();
-                    // inst->fault = NoFault;
-                    // instToCommit(inst);
-                }
-                else
-                {
-                    fault = read(request, inst->lqIdx);
-                }
+            {          
+                fault = read(request, inst->lqIdx);
             }            
             else
             {
