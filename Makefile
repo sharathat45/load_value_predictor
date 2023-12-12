@@ -7,7 +7,7 @@ SRC_H = include
 ASSEMBLY_FLAG = -S
 CC = /usr/bin/g++ -O2 -std=gnu++11 -I $(SRC_H) -L util/m5/build/x86/out/
 
-MODEL = ./build/ECE565-ARM/gem5.opt 
+MODEL = ./build/ECE565-ARM/gem5.debug 
 CONFIG = ./configs/example/se.py 
 CONFIG_FLAGS = --cpu-type=O3CPU --maxinsts=1000000 --l1d_size=64kB --l1i_size=16kB --caches --l2cache
 HELLO_EXECUTABLE = tests/test-progs/hello/bin/arm/linux/hello
@@ -51,6 +51,12 @@ $(BENCHMARKS):
 	BENCHMARK_BIN=$@; \
 	$(MODEL) $(DEBUG_FLAGS) $(BENCHMARK_CONFIG) $(CONFIG_FLAGS) -b $$BENCHMARK_BIN
 	@echo "$(BENCHMARK_CONFIG) $(CONFIG_FLAGS) -b $@" > last_command
+
+valgrind:
+	valgrind --leak-check=yes --track-origins=yes --suppressions=util/valgrind-suppressions $(MODEL) $(DEBUG_FLAGS) $(CONFIG) $(CONFIG_FLAGS) -c $(HELLO_EXECUTABLE)
+
+gdb:
+	gdb --args $(MODEL) $(DEBUG_FLAGS) --debug-break=100 $(CONFIG) $(CONFIG_FLAGS) -c $(HELLO_EXECUTABLE)
 
 patch:
 	git format-patch --stdout $(COMMIT_BEGIN)^..$(COMMIT_END) > ./scripts/patches/`date +%Y%m%d_%H%M%S`.patch

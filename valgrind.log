@@ -1,0 +1,12 @@
+valgrind --leak-check=yes --suppressions=util/valgrind-suppressions ./build/ECE565-ARM/gem5.opt   ./configs/example/se.py  --cpu-type=O3CPU --maxinsts=1000000 --l1d_size=64kB --l1i_size=16kB --caches --l2cache --enable-lvp -c tests/test-progs/hello/bin/arm/linux/hello
+Global frequency set at 1000000000000 ticks per second
+gem5 Simulator System.  https://www.gem5.org
+gem5 is copyrighted software; use the --copyright option for details.
+
+gem5 version 22.0.0.2
+gem5 compiled Dec 12 2023 01:50:35
+gem5 started Dec 12 2023 02:00:30
+gem5 executing on qstruct.ecn.purdue.edu, pid 26492
+command line: ./build/ECE565-ARM/gem5.opt ./configs/example/se.py --cpu-type=O3CPU --maxinsts=1000000 --l1d_size=64kB --l1i_size=16kB --caches --l2cache --enable-lvp -c tests/test-progs/hello/bin/arm/linux/hello
+
+**** REAL SIMULATION ****
