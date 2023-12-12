@@ -1153,8 +1153,8 @@ void IEW::executeInsts()
 
                 // initiateMemRead(Addr addr, unsigned size, Request::Flags flags, const std::vector<bool> &byte_enable)
 
-                // If the load is constant, then we can skip the memory access
-                if (ENABLE_LVP == true && inst->readLdConstant() == true)
+                // If the load is still constant, then we can skip the memory access
+                if (ENABLE_LVP == true && inst->readLdConstant() == true && lvp_unit->cvu_valid(inst))
                 {
                     inst->setExecuted();
                     inst->fault = NoFault;
@@ -1189,7 +1189,9 @@ void IEW::executeInsts()
             } else if (inst->isStore()) {
                 fault = ldstQueue.executeStore(inst);
 
-                //lvpunit -> cvu.invalidate(inst->pcState,inst->effAddr, inst->threadNumber);
+                // should invalidate right after execute
+                // wait until commit will be late
+                lvp_unit -> cvu_invalidate(inst);
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {

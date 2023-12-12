@@ -52,6 +52,10 @@ class LVPUnit
      */
     void update(const DynInstPtr &inst);
 
+    void cvu_invalidate(const DynInstPtr &inst);
+
+    bool cvu_valid(const DynInstPtr &inst);
+
     /**
      * Squashes all outstanding updates until a given sequence number.
      * @param squashed_sn The sequence number to squash any younger updates up
