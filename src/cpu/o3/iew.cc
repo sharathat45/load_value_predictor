@@ -939,15 +939,10 @@ void IEW::dispatchInsts(ThreadID tid)
             // If the load is constant, then we can skip the memory access
             if (ENABLE_LVP == true)
             {
-                DPRINTF(LVPUnit, "Dispatch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu isInLSQ:%d constantld:%d \n",
+                DPRINTF(LVPUnit, "Issue: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu isInLSQ:%d constantld:%d \n",
                         tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->isInLSQ(), inst->readLdConstant());
             }
-            else{
-                // Reserve a spot in the load store queue for this
-                // memory access.
-                ldstQueue.insertLoad(inst);
-            }
-
+            
             ++iewStats.dispLoadInsts;
 
             add_to_iq = true;
@@ -1357,17 +1352,6 @@ void IEW::writebackInsts()
 
             int dependents = instQueue.wakeDependents(inst);
 
-            if (ENABLE_LVP == true && inst->isLoad())
-            {
-                if (inst->memOpDone() && inst->memData != nullptr && inst->readLdConstant() == false)
-                {
-                    lvp_unit->update(inst);
-                }
-
-                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu data_Addr:%llu isInLSQ:%d constantld:%d \n",
-                        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
-            }
-
             for (int i = 0; i < inst->numDestRegs(); i++) {
                 // Mark register as ready if not pinned
                 if (inst->renamedDestIdx(i)-> getNumPinnedWritesToComplete() == 0) 
@@ -1381,7 +1365,19 @@ void IEW::writebackInsts()
                 iewStats.producerInst[tid]++;
                 iewStats.consumerInst[tid]+= dependents;
             }
+
             iewStats.writebackCount[tid]++;
+
+            if (ENABLE_LVP == true && inst->isLoad())
+            {
+                if (inst->memOpDone() && inst->memData != nullptr && inst->readLdConstant() == false)
+                {
+                    lvp_unit->update(inst);
+                }
+
+                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu data_Addr:%llu isInLSQ:%d constantld:%d \n",
+                        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
+            }
         }
 
     }
