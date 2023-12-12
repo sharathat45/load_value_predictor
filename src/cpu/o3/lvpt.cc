@@ -50,7 +50,7 @@ bool LVPT::valid(Addr loadAddr, ThreadID tid)
 
     assert(lvpt_idx < numEntries);
 
-    if (lvpt[lvpt_idx].valid && lvpt[lvpt_idx].tid == tid) {
+    if (lvpt[lvpt_idx].valid) {
         return true;
     } else {
         return false;
@@ -65,7 +65,7 @@ uint64_t LVPT::lookup(Addr loadAddr, ThreadID tid)
 
     assert(lvpt_idx < numEntries);
 
-    if (lvpt[lvpt_idx].valid && lvpt[lvpt_idx].tid == tid) {
+    if (lvpt[lvpt_idx].valid ) {
         uint64_t value = lvpt[lvpt_idx].value;
         DPRINTF(LVPUnit, "found pred val 0x%x\n", value);
         return value;

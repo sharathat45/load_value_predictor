@@ -72,7 +72,7 @@ bool LVPUnit::predict(const DynInstPtr &inst)
             inst -> setLdConstant(counter_val == 3);
             inst -> setLdPredictible(true);
     
-            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] PC = %s ld_val = %llu LVP predicted predictible\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
+            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] PC:0x%x ld_val = %llu LVP predicted predictible\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
             return true;
         }
         else       
