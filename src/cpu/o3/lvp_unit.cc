@@ -15,9 +15,11 @@ namespace gem5
 namespace o3
 {
 
-LVPUnit::LVPUnit(const BaseO3CPUParams &params)
-    : numThreads(params.numThreads),
+LVPUnit::LVPUnit(CPU *_cpu, const BaseO3CPUParams &params)
+    : SimObject(params),
+        numThreads(params.numThreads),
         // predHist(numThreads),
+        stats(_cpu),
         instShiftAmt(params.instShiftAmt),
         lct(params.LCTEntries,
             params.LCTCtrBits,
@@ -30,7 +32,6 @@ LVPUnit::LVPUnit(const BaseO3CPUParams &params)
             params.LVPTEntries, // for creating LVPT index
             instShiftAmt,
             params.numThreads)
-        // stats(this)
 {}
 
 
@@ -39,12 +40,14 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     // See if LCT predicts predictible.
     // If so, get its value from LVPT.
 
-    // ++stats.LCTLookups;
 
     ThreadID tid = inst->threadNumber;
     const PCStateBase &pc = inst->pcState();
     uint8_t counter_val = lct.lookup(tid, pc.instAddr());
     bool is_predictible_ld = lct.getPrediction(counter_val);
+
+    stats.LCTLookups += 1;
+    stats.LCTPredictable += is_predictible_ld;
     
     if (is_predictible_ld == false) 
     {
@@ -57,9 +60,26 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     }
     else
     {   
+        ++stats.LVPTLookups;
+
         inst -> setLdPredictible(true);
+<<<<<<< HEAD
         if (counter_val == 3)
         { inst->setLdConstant(true); } 
+=======
+        inst -> setLdConstant(counter_val == 3);
+
+        if (lvpt.valid(pc.instAddr(), tid))
+        {
+            ++stats.LVPTHits;
+            ++stats.ldvalPredicted;
+
+            uint8_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
+            inst->PredictedLdValue(ld_predict_val);
+            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC = %s with ld_val = %u\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
+            return true;
+        }
+>>>>>>> lvp_stats
         else
         { inst->setLdConstant(false); }
 
@@ -144,6 +164,7 @@ void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {
     return;
 }
 
+<<<<<<< HEAD
 bool LVPUnit::cvu_valid(const DynInstPtr &inst) {
     const PCStateBase &pc = inst->pcState();
     Addr instPC = pc.instAddr();
@@ -154,34 +175,28 @@ bool LVPUnit::cvu_valid(const DynInstPtr &inst) {
 }
 
 /*
+=======
+>>>>>>> lvp_stats
 LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
-    : statistics::Group(parent),
-      ADD_STAT(lookups, statistics::units::Count::get(),
-              "Number of BP lookups"),
-      ADD_STAT(condPredicted, statistics::units::Count::get(),
-               "Number of conditional branches predicted"),
-      ADD_STAT(condIncorrect, statistics::units::Count::get(),
-               "Number of conditional branches incorrect"),
+    : statistics::Group(parent, "lvp"),
+      ADD_STAT(ldvalPredicted, statistics::units::Count::get(),
+               "Number of load values predicted"),
+      ADD_STAT(ldvalIncorrect, statistics::units::Count::get(),
+               "Number of load values incorrect"),
+      ADD_STAT(LCTLookups, statistics::units::Count::get(),
+               "Number of LCT lookups"),
+      ADD_STAT(LCTPredictable, statistics::units::Count::get(),
+               "Number of LCT lookups that were predictable"),
       ADD_STAT(LVPTLookups, statistics::units::Count::get(),
-               "Number of BTB lookups"),
-      ADD_STAT(LVPTHits, statistics::units::Count::get(), "Number of BTB hits"),
-      ADD_STAT(BTBHitRatio, statistics::units::Ratio::get(), "BTB Hit Ratio",
-               LVPTHits / LVPTLookups),
-      ADD_STAT(RASUsed, statistics::units::Count::get(),
-               "Number of times the RAS was used to get a target."),
-      ADD_STAT(RASIncorrect, statistics::units::Count::get(),
-               "Number of incorrect RAS predictions."),
-      ADD_STAT(indirectLookups, statistics::units::Count::get(),
-               "Number of indirect predictor lookups."),
-      ADD_STAT(indirectHits, statistics::units::Count::get(),
-               "Number of indirect target hits."),
-      ADD_STAT(indirectMisses, statistics::units::Count::get(),
-               "Number of indirect misses."),
-      ADD_STAT(indirectMispredicted, statistics::units::Count::get(),
-               "Number of mispredicted indirect branches.")
+               "Number of LVPT lookups"),
+      ADD_STAT(LVPTHits, statistics::units::Count::get(), "Number of LVPT hits"),
+      ADD_STAT(LVPTHitRatio, statistics::units::Ratio::get(), "LVPT Hit Ratio",
+               LVPTHits / LVPTLookups)
 {
-    BTBHitRatio.precision(6);
+    LVPTHitRatio.precision(6);
 }
+
+/*
 void LVPUnit::drainSanityCheck() const
 {
     // We shouldn't have any outstanding requests when we resume from a drained system.

@@ -27,11 +27,11 @@ namespace o3
 /**
  * Basically a wrapper class to hold LCT, LVPT and CVT
  */
-class LVPUnit
+class LVPUnit : public SimObject
 {
   public:
     
-    LVPUnit(const BaseO3CPUParams &params);
+    LVPUnit(CPU *_cpu, const BaseO3CPUParams &params);
 
     /** Perform sanity checks after a drain. */
     // void drainSanityCheck() const;
@@ -206,24 +206,25 @@ class LVPUnit
      */
     //   std::vector<History> predHist;
 
-    //   struct LVPredUnitStats : public statistics::Group
-    //   {
-    //       LVPredUnitStats(statistics::Group *parent);
+    struct LVPUnitStats : public statistics::Group
+    {
+        LVPUnitStats(statistics::Group *parent);
 
-    //       /** Stat for number of LVP lookups. */
-    //       statistics::Scalar lookups;
-    //       /** Stat for number of lds predicted. */
-    //       statistics::Scalar ldvalPredicted;
-    //       /** Stat for number of lds predicted incorrectly. */
-    //       statistics::Scalar ldvalIncorrect;
-    //       /** Stat for number of LVPT lookups. */
-    //       statistics::Scalar LVPTLookups;
-    //       /** Stat for number of LVPT hits. */
-    //       statistics::Scalar LVPTHits;
-    //       /** Stat for the ratio between LVPT hits and LVPT lookups. */
-    //       statistics::Formula LVPTHitRatio;
-
-    //   } stats;
+        /** Stat for number of lds predicted. */
+        statistics::Scalar ldvalPredicted;
+        /** Stat for number of lds predicted incorrectly. */
+        statistics::Scalar ldvalIncorrect;
+        /** Stat for number of LCT lookups. */
+        statistics::Scalar LCTLookups;
+        /** Stat for number of LCT predictable lookups. */
+        statistics::Scalar LCTPredictable;
+        /** Stat for number of LVPT lookups. */
+        statistics::Scalar LVPTLookups;
+        /** Stat for number of LVPT hits. */
+        statistics::Scalar LVPTHits;
+        /** Stat for the ratio between LVPT hits and LVPT lookups. */
+        statistics::Formula LVPTHitRatio;
+    } stats;
 
   protected:
     /** Number of bits to shift instructions by for predictor addresses. */
