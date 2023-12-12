@@ -70,7 +70,7 @@ bool LVPUnit::predict(const DynInstPtr &inst)
             ++stats.LVPTHits;
             ++stats.ldvalPredicted;
 
-            uint8_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
+            uint64_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
             inst->PredictedLdValue(ld_predict_val);
             DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC = %s with ld_val = %u\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val);
             return true;
@@ -80,7 +80,7 @@ bool LVPUnit::predict(const DynInstPtr &inst)
 
             if (lvpt.valid(pc.instAddr(), tid))
             {
-                uint8_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
+                uint64_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
                 inst->PredictedLdValue(ld_predict_val);
                 DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC:0x%x with ld_val = %u\n", inst->threadNumber, inst->seqNum, pc.instAddr(), ld_predict_val);
                 return true;
@@ -100,7 +100,7 @@ void LVPUnit::update(const DynInstPtr &inst)
 {
     //can use  effAddrValid()
 
-    uint8_t mem_ld_value = *(inst->memData);
+    uint64_t mem_ld_value = *(inst->memData);
     const PCStateBase &pc = inst->pcState();
     ThreadID tid = inst->threadNumber;
 
@@ -117,8 +117,8 @@ void LVPUnit::update(const DynInstPtr &inst)
     }
     else
     {       
-        uint8_t lvpt_ld_value = lvpt.lookup(pc.instAddr(), tid);
-        uint8_t pred_ld_value = inst->PredictedLdValue();
+        uint64_t lvpt_ld_value = lvpt.lookup(pc.instAddr(), tid);
+        uint64_t pred_ld_value = inst->PredictedLdValue();
 
         if (lvpt_ld_value != pred_ld_value)
         {
@@ -142,6 +142,8 @@ void LVPUnit::update(const DynInstPtr &inst)
                 // make the counter to not predictible
                 lct.update(tid, pc.instAddr(), false, false);
                 lvpt.update(pc.instAddr(), mem_ld_value, tid);
+
+                stats.ldvalIncorrect++;
             }
          }
     }
@@ -175,6 +177,9 @@ LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
                "Number of load values predicted"),
       ADD_STAT(ldvalIncorrect, statistics::units::Count::get(),
                "Number of load values incorrect"),
+      ADD_STAT(ldvalAccuracy, statistics::units::Ratio::get(),
+               "Fraction of predicted load values that were correctly predicted",
+               (ldvalPredicted - ldvalIncorrect) / ldvalPredicted),
       ADD_STAT(LCTLookups, statistics::units::Count::get(),
                "Number of LCT lookups"),
       ADD_STAT(LCTPredictable, statistics::units::Count::get(),

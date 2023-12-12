@@ -119,7 +119,7 @@ inline void CVU::replacement(unsigned instr_idx, Addr data_addr, unsigned eff_si
 {
     unsigned char LRU = 0xff;
     unsigned LRU_idx = 0;
-    uint8_t old_data_addr;
+    Addr old_data_addr;
     
     // More efficient way?
     for (unsigned i = 0;i < numEntries; i++){
@@ -138,7 +138,7 @@ inline void CVU::replacement(unsigned instr_idx, Addr data_addr, unsigned eff_si
     cvu_table[LRU_idx].LRU = 0;
     LRU_update(LRU_idx);
 
-    DPRINTF(LVPUnit, "CVU LRU replacement table entry [%d]: %d -> %d", LRU_idx, old_data_addr, data_addr);
+    DPRINTF(LVPUnit, "CVU LRU replacement table entry [%d]: %d -> %d \n", LRU_idx, old_data_addr, data_addr);
 
     return;
 }

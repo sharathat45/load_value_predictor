@@ -73,7 +73,7 @@ class LVPUnit : public SimObject
      * @param actually_predictible The correct lvp direction.
      * @param tid The thread id.
      */
-    // void squash(const InstSeqNum &squashed_sn, const uint8_t &corr_ldval, bool actually_predictible, ThreadID tid);
+    // void squash(const InstSeqNum &squashed_sn, const uint64_t &corr_ldval, bool actually_predictible, ThreadID tid);
         
     // void dump();
 
@@ -88,6 +88,8 @@ class LVPUnit : public SimObject
         statistics::Scalar ldvalPredicted;
         /** Stat for number of lds predicted incorrectly. */
         statistics::Scalar ldvalIncorrect;
+        /** Stat for fraction of predicted lds predicted correctly. */
+        statistics::Formula ldvalAccuracy;
         /** Stat for number of LCT lookups. */
         statistics::Scalar LCTLookups;
         /** Stat for number of LCT predictable lookups. */

@@ -240,7 +240,7 @@ class DynInst : public ExecContext, public RefCounted
     uint8_t *_readySrcIdx;
 
     //Predicted ld value 
-    uint8_t predictedLdValue;
+    uint64_t predictedLdValue;
 
   public:
     size_t numSrcs() const { return _numSrcs; }
@@ -248,7 +248,7 @@ class DynInst : public ExecContext, public RefCounted
 
     // Returns the
 
-    const uint8_t &PredictedLdValue() const { return predictedLdValue; }
+    const uint64_t &PredictedLdValue() const { return predictedLdValue; }
     void PredictedLdValue(const uint64_t ld_value) { predictedLdValue = ld_value; }
 
     // Returns the flattened register index of the idx'th destination

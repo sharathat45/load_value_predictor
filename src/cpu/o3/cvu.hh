@@ -26,7 +26,7 @@ class CVU
         ThreadID tid;
 
         /* constant data */
-        uint8_t data;
+        uint64_t data;
 
         /** Whether or not the entry is valid. */
         bool valid;
