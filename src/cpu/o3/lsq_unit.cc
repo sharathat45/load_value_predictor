@@ -1576,7 +1576,6 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
         load_inst->memData = new uint8_t[request->mainReq()->getSize()];
     }
 
-
     // hardware transactional memory
     if (request->mainReq()->isHTMCmd()) {
         // this is a simple sanity check

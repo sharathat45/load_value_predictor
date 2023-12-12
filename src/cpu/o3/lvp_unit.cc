@@ -134,7 +134,7 @@ void LVPUnit::update(const DynInstPtr &inst)
 
                 if (lct.lookup(tid, pc.instAddr()) == 3)
                 {
-                    cvu.update(pc.instAddr(), inst->effAddr, mem_ld_value, tid);
+                    cvu.update(pc.instAddr(), inst->effAddr, inst->effSize, mem_ld_value, tid);
                 }
             }
             else

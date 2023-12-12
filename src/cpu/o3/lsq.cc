@@ -859,9 +859,9 @@ LSQ::pushRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
                     if(lvp_unit->cvu_valid(inst))
                     {
                         fault = NoFault;
-                        // *(inst->memData) = inst->PredictedLdValue();
+                        *(inst->memData) = inst->PredictedLdValue();
 
-                        fault = read(request, inst->lqIdx);
+                        // fault = read(request, inst->lqIdx);
 
                         DPRINTF(LVPUnit, "LSQ: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u actualVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
                                 tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), *(inst->memData), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
