@@ -227,8 +227,7 @@ IEW::IEWStats::ExecutedInstStats::ExecutedInstStats(CPU *cpu)
         .flags(statistics::total);
 }
 
-void
-IEW::startupStage()
+void IEW::startupStage()
 {
     for (ThreadID tid = 0; tid < numThreads; tid++) {
         toRename->iewInfo[tid].usedIQ = true;
@@ -250,8 +249,7 @@ IEW::startupStage()
     cpu->activateStage(CPU::IEWIdx);
 }
 
-void
-IEW::clearStates(ThreadID tid)
+void IEW::clearStates(ThreadID tid)
 {
     toRename->iewInfo[tid].usedIQ = true;
     toRename->iewInfo[tid].freeIQEntries =
@@ -262,8 +260,7 @@ IEW::clearStates(ThreadID tid)
     toRename->iewInfo[tid].freeSQEntries = ldstQueue.numFreeStoreEntries(tid);
 }
 
-void
-IEW::setTimeBuffer(TimeBuffer<TimeStruct> *tb_ptr)
+void IEW::setTimeBuffer(TimeBuffer<TimeStruct> *tb_ptr)
 {
     timeBuffer = tb_ptr;
 
@@ -279,8 +276,7 @@ IEW::setTimeBuffer(TimeBuffer<TimeStruct> *tb_ptr)
     instQueue.setTimeBuffer(tb_ptr);
 }
 
-void
-IEW::setRenameQueue(TimeBuffer<RenameStruct> *rq_ptr)
+void IEW::setRenameQueue(TimeBuffer<RenameStruct> *rq_ptr)
 {
     renameQueue = rq_ptr;
 
@@ -288,8 +284,7 @@ IEW::setRenameQueue(TimeBuffer<RenameStruct> *rq_ptr)
     fromRename = renameQueue->getWire(-renameToIEWDelay);
 }
 
-void
-IEW::setIEWQueue(TimeBuffer<IEWStruct> *iq_ptr)
+void IEW::setIEWQueue(TimeBuffer<IEWStruct> *iq_ptr)
 {
     iewQueue = iq_ptr;
 
@@ -297,8 +292,7 @@ IEW::setIEWQueue(TimeBuffer<IEWStruct> *iq_ptr)
     toCommit = iewQueue->getWire(0);
 }
 
-void
-IEW::setActiveThreads(std::list<ThreadID> *at_ptr)
+void IEW::setActiveThreads(std::list<ThreadID> *at_ptr)
 {
     activeThreads = at_ptr;
 
@@ -306,14 +300,12 @@ IEW::setActiveThreads(std::list<ThreadID> *at_ptr)
     instQueue.setActiveThreads(at_ptr);
 }
 
-void
-IEW::setScoreboard(Scoreboard *sb_ptr)
+void IEW::setScoreboard(Scoreboard *sb_ptr)
 {
     scoreboard = sb_ptr;
 }
 
-bool
-IEW::isDrained() const
+bool IEW::isDrained() const
 {
     bool drained = ldstQueue.isDrained() && instQueue.isDrained();
 
@@ -340,8 +332,7 @@ IEW::isDrained() const
     return drained;
 }
 
-void
-IEW::drainSanityCheck() const
+void IEW::drainSanityCheck() const
 {
     assert(isDrained());
 
@@ -349,8 +340,7 @@ IEW::drainSanityCheck() const
     ldstQueue.drainSanityCheck();
 }
 
-void
-IEW::takeOverFrom()
+void IEW::takeOverFrom()
 {
     // Reset all state.
     _status = Active;
@@ -376,8 +366,7 @@ IEW::takeOverFrom()
     }
 }
 
-void
-IEW::squash(ThreadID tid)
+void IEW::squash(ThreadID tid)
 {
     DPRINTF(IEW, "[tid:%i] Squashing all instructions.\n", tid);
 
@@ -411,8 +400,7 @@ IEW::squash(ThreadID tid)
     emptyRenameInsts(tid);
 }
 
-void
-IEW::squashDueToBranch(const DynInstPtr& inst, ThreadID tid)
+void IEW::squashDueToBranch(const DynInstPtr& inst, ThreadID tid)
 {
     DPRINTF(IEW, "[tid:%i] [sn:%llu] Squashing from a specific instruction,"
             " PC: %s "
@@ -435,8 +423,7 @@ IEW::squashDueToBranch(const DynInstPtr& inst, ThreadID tid)
 
 }
 
-void
-IEW::squashDueToMemOrder(const DynInstPtr& inst, ThreadID tid)
+void IEW::squashDueToMemOrder(const DynInstPtr& inst, ThreadID tid)
 {
     DPRINTF(IEW, "[tid:%i] Memory violation, squashing violator and younger "
             "insts, PC: %s [sn:%llu].\n", tid, inst->pcState(), inst->seqNum);
@@ -461,8 +448,7 @@ IEW::squashDueToMemOrder(const DynInstPtr& inst, ThreadID tid)
     }
 }
 
-void
-IEW::block(ThreadID tid)
+void IEW::block(ThreadID tid)
 {
     DPRINTF(IEW, "[tid:%i] Blocking.\n", tid);
 
@@ -479,8 +465,7 @@ IEW::block(ThreadID tid)
     dispatchStatus[tid] = Blocked;
 }
 
-void
-IEW::unblock(ThreadID tid)
+void IEW::unblock(ThreadID tid)
 {
     DPRINTF(IEW, "[tid:%i] Reading instructions out of the skid "
             "buffer %u.\n",tid, tid);
@@ -495,38 +480,32 @@ IEW::unblock(ThreadID tid)
     }
 }
 
-void
-IEW::wakeDependents(const DynInstPtr& inst)
+void IEW::wakeDependents(const DynInstPtr& inst)
 {
     instQueue.wakeDependents(inst);
 }
 
-void
-IEW::rescheduleMemInst(const DynInstPtr& inst)
+void IEW::rescheduleMemInst(const DynInstPtr& inst)
 {
     instQueue.rescheduleMemInst(inst);
 }
 
-void
-IEW::replayMemInst(const DynInstPtr& inst)
+void IEW::replayMemInst(const DynInstPtr& inst)
 {
     instQueue.replayMemInst(inst);
 }
 
-void
-IEW::blockMemInst(const DynInstPtr& inst)
+void IEW::blockMemInst(const DynInstPtr& inst)
 {
     instQueue.blockMemInst(inst);
 }
 
-void
-IEW::cacheUnblocked()
+void IEW::cacheUnblocked()
 {
     instQueue.cacheUnblocked();
 }
 
-void
-IEW::instToCommit(const DynInstPtr& inst)
+void IEW::instToCommit(const DynInstPtr& inst)
 {
     // This function should not be called after writebackInsts in a
     // single cycle.  That will cause problems with an instruction
@@ -553,8 +532,7 @@ IEW::instToCommit(const DynInstPtr& inst)
     (*iewQueue)[wbCycle].size++;
 }
 
-void
-IEW::skidInsert(ThreadID tid)
+void IEW::skidInsert(ThreadID tid)
 {
     DynInstPtr inst = NULL;
 
@@ -574,8 +552,7 @@ IEW::skidInsert(ThreadID tid)
            "Skidbuffer Exceeded Max Size");
 }
 
-int
-IEW::skidCount()
+int IEW::skidCount()
 {
     int max=0;
 
@@ -592,8 +569,7 @@ IEW::skidCount()
     return max;
 }
 
-bool
-IEW::skidsEmpty()
+bool IEW::skidsEmpty()
 {
     std::list<ThreadID>::iterator threads = activeThreads->begin();
     std::list<ThreadID>::iterator end = activeThreads->end();
@@ -608,8 +584,7 @@ IEW::skidsEmpty()
     return true;
 }
 
-void
-IEW::updateStatus()
+void IEW::updateStatus()
 {
     bool any_unblocking = false;
 
@@ -648,8 +623,7 @@ IEW::updateStatus()
     }
 }
 
-bool
-IEW::checkStall(ThreadID tid)
+bool IEW::checkStall(ThreadID tid)
 {
     bool ret_val(false);
 
@@ -664,8 +638,7 @@ IEW::checkStall(ThreadID tid)
     return ret_val;
 }
 
-void
-IEW::checkSignalsAndUpdate(ThreadID tid)
+void IEW::checkSignalsAndUpdate(ThreadID tid)
 {
     // Check if there's a squash signal, squash if there is
     // Check stall signals, block if there is.
@@ -727,8 +700,7 @@ IEW::checkSignalsAndUpdate(ThreadID tid)
     }
 }
 
-void
-IEW::sortInsts()
+void IEW::sortInsts()
 {
     int insts_from_rename = fromRename->size;
 #ifdef DEBUG
@@ -740,8 +712,7 @@ IEW::sortInsts()
     }
 }
 
-void
-IEW::emptyRenameInsts(ThreadID tid)
+void IEW::emptyRenameInsts(ThreadID tid)
 {
     DPRINTF(IEW, "[tid:%i] Removing incoming rename instructions\n", tid);
 
@@ -761,35 +732,30 @@ IEW::emptyRenameInsts(ThreadID tid)
     }
 }
 
-void
-IEW::wakeCPU()
+void IEW::wakeCPU()
 {
     cpu->wakeCPU();
 }
 
-void
-IEW::activityThisCycle()
+void IEW::activityThisCycle()
 {
     DPRINTF(Activity, "Activity this cycle.\n");
     cpu->activityThisCycle();
 }
 
-void
-IEW::activateStage()
+void IEW::activateStage()
 {
     DPRINTF(Activity, "Activating stage.\n");
     cpu->activateStage(CPU::IEWIdx);
 }
 
-void
-IEW::deactivateStage()
+void IEW::deactivateStage()
 {
     DPRINTF(Activity, "Deactivating stage.\n");
     cpu->deactivateStage(CPU::IEWIdx);
 }
 
-void
-IEW::dispatch(ThreadID tid)
+void IEW::dispatch(ThreadID tid)
 {
     // If status is Running or idle,
     //     call dispatchInsts()
@@ -835,8 +801,7 @@ IEW::dispatch(ThreadID tid)
     }
 }
 
-void
-IEW::dispatchInsts(ThreadID tid)
+void IEW::dispatchInsts(ThreadID tid)
 {
     // Obtain instructions from skid buffer if unblocking, or queue from rename
     // otherwise.
@@ -859,16 +824,14 @@ IEW::dispatchInsts(ThreadID tid)
         inst = insts_to_dispatch.front();
 
         if (dispatchStatus[tid] == Unblocking) {
-            DPRINTF(IEW, "[tid:%i] Issue: Examining instruction from skid "
-                    "buffer\n", tid);
+            DPRINTF(IEW, "[tid:%i] Issue: Examining instruction from skid buffer\n", tid);
         }
 
         // Make sure there's a valid instruction there.
         assert(inst);
 
-        DPRINTF(IEW, "[tid:%i] Issue: Adding PC %s [sn:%lli] [tid:%i] to "
-                "IQ.\n",
-                tid, inst->pcState(), inst->seqNum, inst->threadNumber);
+        DPRINTF(IEW, "[tid:%i] Issue: Adding PC %s [sn:%lli] [tid:%i] to IQ.\n",
+                tid, inst->pcState(), inst->seqNum, inst->threadNumber );
 
         // Be sure to mark these instructions as ready so that the
         // commit stage can go ahead and execute them, and mark
@@ -967,8 +930,7 @@ IEW::dispatchInsts(ThreadID tid)
         } else if (inst->isLoad()) {
            
            
-            DPRINTF(IEW, "[tid:%i] Issue: Memory instruction "
-                    "encountered, adding to LSQ.\n", tid);
+            DPRINTF(IEW, "[tid:%i] Issue: Memory instruction encountered, adding to LSQ.\n", tid);
 
             // If the load is constant, then we can skip the memory access
             if (ENABLE_LVP == true)
@@ -1093,8 +1055,7 @@ IEW::dispatchInsts(ThreadID tid)
     dis_num_inst = 0;
 }
 
-void
-IEW::printAvailableInsts()
+void IEW::printAvailableInsts()
 {
     int inst = 0;
 
@@ -1172,8 +1133,7 @@ void IEW::executeInsts()
         // Note that if the instruction faults, it will be handled
         // at the commit stage.
         if (inst->isMemRef()) {
-            DPRINTF(IEW, "Execute: Calculating address for memory "
-                    "reference.\n");
+            DPRINTF(IEW, "Execute: Calculating address for memory reference.\n");
 
             // Tell the LDSTQ to execute this instruction (if it is a load).
             if (inst->isAtomic()) {
@@ -1199,10 +1159,10 @@ void IEW::executeInsts()
                     inst->setExecuted();
                     inst->fault = NoFault;
                     instToCommit(inst);
-                    //Not sure if the activity needs to be recorded here
-                    // activityThisCycle();
+                    
 
-                    DPRINTF(LVPUnit, "EX: [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
+
+                    DPRINTF(LVPUnit, "EX: Constant ld [tid:%i] [sn:%llu] PC = %s memOpDone:%d isInLSQ:%d \n",
                             inst->threadNumber, inst->seqNum, inst->pcState(), inst->memOpDone(), inst->isInLSQ());
                 }
                 else
@@ -1446,8 +1406,7 @@ void IEW::writebackInsts()
     }
 }
 
-void
-IEW::tick()
+void IEW::tick()
 {
     wbNumInst = 0;
     wbCycle = 0;
@@ -1575,8 +1534,7 @@ IEW::tick()
     }
 }
 
-void
-IEW::updateExeInstStats(const DynInstPtr& inst)
+void IEW::updateExeInstStats(const DynInstPtr& inst)
 {
     ThreadID tid = inst->threadNumber;
 
@@ -1606,8 +1564,7 @@ IEW::updateExeInstStats(const DynInstPtr& inst)
     }
 }
 
-void
-IEW::checkMisprediction(const DynInstPtr& inst)
+void IEW::checkMisprediction(const DynInstPtr& inst)
 {
     ThreadID tid = inst->threadNumber;
 

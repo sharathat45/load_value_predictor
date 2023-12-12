@@ -42,7 +42,6 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     // ++stats.LCTLookups;
 
     ThreadID tid = inst->threadNumber;
-
     const PCStateBase &pc = inst->pcState();
     uint8_t counter_val = lct.lookup(tid, pc.instAddr());
     bool is_predictible_ld = lct.getPrediction(counter_val);
@@ -128,8 +127,6 @@ void LVPUnit::update(const DynInstPtr &inst)
             }
          }
     }
-
-    DPRINTF(LVPUnit, "[tid:%i] Committing ld ins until sn:%llu]\n", tid, inst->seqNum);
     
     // while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
     //     // Update the LCT with the correct results.

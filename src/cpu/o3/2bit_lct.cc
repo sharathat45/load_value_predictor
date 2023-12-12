@@ -19,28 +19,27 @@ LCT::LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsign
       instShiftAmt(_instShiftAmt)
 {
     if (!isPowerOf2(lctSize)) {
-        fatal("Invalid LCT size!\n");
+        fatal("LCT: Invalid LCT size!\n");
     }
 
     if (!isPowerOf2(lctPredictorSets)) {
-        fatal("Invalid number of LCT predictor sets! Check lctCtrBits.\n");
+        fatal("LCT: Invalid number of LCT predictor sets! Check lctCtrBits.\n");
     }
 
-    DPRINTF(LVPUnit, "index mask: %#x\n", indexMask); 
+    DPRINTF(LVPUnit, "LCT: index mask: %#x\n", indexMask);
 
-    DPRINTF(LVPUnit, "local predictor size: %i\n", lctSize); 
+    DPRINTF(LVPUnit, "LCT: local predictor size: %i\n", lctSize);
 
-    DPRINTF(LVPUnit, "local counter bits: %i\n", lctCtrBits); 
+    DPRINTF(LVPUnit, "LCT: local counter bits: %i\n", lctCtrBits);
 
-    DPRINTF(LVPUnit, "instruction shift amount: %i\n", instShiftAmt); 
+    DPRINTF(LVPUnit, "LCT: instruction shift amount: %i\n", instShiftAmt);
 }
 
-uint8_t LCT::lookup(ThreadID tid, Addr ld_addr)
+uint8_t LCT::lookup(ThreadID tid, Addr inst_addr)
 {
-    bool predictible;
-    unsigned lct_idx = getLocalIndex(ld_addr);
+    unsigned lct_idx = getLocalIndex(inst_addr);
 
-    DPRINTF(LVPUnit, "Looking up index %#x\n", lct_idx); 
+    DPRINTF(LVPUnit, "LCT: PC = %llu Looking up index %#x\n", inst_addr, lct_idx);
 
     uint8_t counter_val = lctCtrs[lct_idx];
 
@@ -49,13 +48,11 @@ uint8_t LCT::lookup(ThreadID tid, Addr ld_addr)
 
 bool LCT::getPrediction(uint8_t &count)
 {
-    DPRINTF(LVPUnit, "prediction is %i.\n", (int)count);
-
     // Get the MSB of the count
     return (count >> (lctCtrBits - 1));
 }
 
-void LCT::update(ThreadID tid, Addr ld_addr, bool prediction_outcome, bool squashed)
+void LCT::update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squashed)
 {
     unsigned lct_idx;
 
@@ -65,25 +62,25 @@ void LCT::update(ThreadID tid, Addr ld_addr, bool prediction_outcome, bool squas
     }
 
     // Update the local predictor.
-    lct_idx = getLocalIndex(ld_addr);
+    lct_idx = getLocalIndex(inst_addr);
 
-    DPRINTF(LVPUnit, "Looking up index %#x\n", lct_idx);
+    DPRINTF(LVPUnit, "LCT: PC = %llu Looking up index %#x\n", inst_addr, lct_idx);
 
     if (prediction_outcome)
     {
-        DPRINTF(LVPUnit, "ld ins address updated as predictible.\n");
         lctCtrs[lct_idx]++;
+        DPRINTF(LVPUnit, "LCT: PC = %llu ld ins address updated ++\n", inst_addr);
     }
     else
     {
-        DPRINTF(LVPUnit, "ld ins address updated as not predictible.\n");
         lctCtrs[lct_idx]--;
+        DPRINTF(LVPUnit, "LCT: PC = %llu ld ins address updated --\n", inst_addr);
     }
 }
 
-inline unsigned LCT::getLocalIndex(Addr &ld_addr)
+inline unsigned LCT::getLocalIndex(Addr &inst_addr)
 {
-    return (ld_addr >> instShiftAmt) & indexMask;
+    return (inst_addr >> instShiftAmt) & indexMask;
 }
 
 } // namespace o3

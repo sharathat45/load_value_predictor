@@ -25,11 +25,11 @@ class LCT
 
     LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsigned _numThreads);
 
-    uint8_t lookup(ThreadID tid, Addr ld_addr);
+    uint8_t lookup(ThreadID tid, Addr inst_addr);
 
-    void lvptUpdate(ThreadID tid, Addr ld_addr, void * &ld_history);
+    void lvptUpdate(ThreadID tid, Addr inst_addr, void * &ld_history);
 
-    void update(ThreadID tid, Addr ld_addr, bool prediction_outcome, bool squashed);
+    void update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squashed);
 
     void squash(ThreadID tid, void *ld_history)
     { assert(ld_history == NULL); }
@@ -38,7 +38,7 @@ class LCT
 
   private:
    
-    inline unsigned getLocalIndex(Addr &ld_addr);
+    inline unsigned getLocalIndex(Addr &inst_addr);
     const unsigned lctSize;
     const unsigned lctCtrBits;
     const unsigned lctPredictorSets;

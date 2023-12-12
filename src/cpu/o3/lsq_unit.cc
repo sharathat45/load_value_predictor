@@ -328,13 +328,13 @@ LSQUnit::insertLoad(const DynInstPtr &load_inst)
     /* Grow the queue. */
     loadQueue.advance_tail();
 
-    load_inst->sqIt = storeQueue.end();
+    load_inst->sqIt = storeQueue.end(); //SET SQIT to end of store queue
 
     assert(!loadQueue.back().valid());
-    loadQueue.back().set(load_inst);
-    load_inst->lqIdx = loadQueue.tail();
+    loadQueue.back().set(load_inst); //****** inserting the ld_inst into the queue
+    load_inst->lqIdx = loadQueue.tail();  //SET LQIDX to tail of load queue
     assert(load_inst->lqIdx > 0);
-    load_inst->lqIt = loadQueue.getIterator(load_inst->lqIdx);
+    load_inst->lqIt = loadQueue.getIterator(load_inst->lqIdx); //SET LQIT to iterator of load queue
 
     // hardware transactional memory
     // transactional state and nesting depth must be tracked
