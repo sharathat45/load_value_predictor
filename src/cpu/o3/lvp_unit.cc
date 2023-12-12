@@ -46,7 +46,7 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     uint8_t counter_val = lct.lookup(tid, pc.instAddr());
     bool is_predictible_ld = lct.getPrediction(counter_val);
     
-    if (!is_predictible_ld) 
+    if (is_predictible_ld == false) 
     {
         DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu]  PC:0x%x Not Predictible %\n", inst->threadNumber, inst->seqNum, pc.instAddr());
 
@@ -58,23 +58,27 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     else
     {   
         inst -> setLdPredictible(true);
-        inst -> setLdConstant(counter_val == 3);
-
-        if (lvpt.valid(pc.instAddr(), tid))
-        {
-            uint8_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
-            inst->PredictedLdValue(ld_predict_val);
-            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC:0x%x with ld_val = %u\n", inst->threadNumber, inst->seqNum, pc.instAddr(), ld_predict_val);
-            return true;
-        }
+        if (counter_val == 3)
+        { inst->setLdConstant(true); } 
         else
-        {
-            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] **** LVPT and LCT outcome not matching **** PC:0x%x \n", tid, inst->seqNum, pc.instAddr());
-            inst -> PredictedLdValue(0);
-            return false;
-        }
+        { inst->setLdConstant(false); }
+
+            if (lvpt.valid(pc.instAddr(), tid))
+            {
+                uint8_t ld_predict_val = lvpt.lookup(pc.instAddr(), tid);
+                inst->PredictedLdValue(ld_predict_val);
+                DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] LVP predicted for PC:0x%x with ld_val = %u\n", inst->threadNumber, inst->seqNum, pc.instAddr(), ld_predict_val);
+                return true;
+            }
+            else
+            {
+                DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] **** LVPT and LCT outcome not matching **** PC:0x%x \n", tid, inst->seqNum, pc.instAddr());
+                inst->PredictedLdValue(0);
+                return false;
+            }
+
+        return true;
     }
-    return is_predictible_ld;
 }
 
 void LVPUnit::update(const DynInstPtr &inst)
@@ -126,22 +130,6 @@ void LVPUnit::update(const DynInstPtr &inst)
             }
          }
     }
-    
-    // while (!predHist[tid].empty() && predHist[tid].back().seqNum <= done_sn) {
-    //     // Update the LCT with the correct results.
-    //     lct.update(tid, predHist[tid].back().pc,
-    //            predHist[tid].back().predPredictible,
-    //            predHist[tid].back().ldHistory, false,
-    //            predHist[tid].back().inst,
-    //            predHist[tid].back().ldval);
-
-    //     // The Direction of the LCT is altered because the LVPT did not have an entry
-    //     // The LVPT needs to be updated accordingly, LCT default is don't predict
-
-    //     lvpt.update(tid, pc.instAddr(), ld_history);
-        
-    //     predHist[tid].pop_back();
-    // }
 }
 
 void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {

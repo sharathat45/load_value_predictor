@@ -531,19 +531,6 @@ Fetch::lookupAndUpdateNextPC(const DynInstPtr &inst, PCStateBase &next_pc)
     predict_taken = branchPred->predict(inst->staticInst, inst->seqNum,
                                         next_pc, tid);
 
-    if (ENABLE_LVP == true && inst->isLoad())
-    {
-        lvp_unit->predict(inst);
-        DPRINTF(LVPUnit, "Fetch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d  predVal:%u\n",
-                tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue());
-    }
-    else
-    {
-        inst->setLdPredictible(false);
-        inst->setLdConstant(false);
-        inst->PredictedLdValue(0);
-    }
-
     if (predict_taken) {
         DPRINTF(Fetch, "[tid:%i] [sn:%llu] Branch at PC %#x "
                 "predicted to be taken to %s\n",

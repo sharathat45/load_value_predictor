@@ -52,6 +52,9 @@
 #include "params/BaseO3CPU.hh"
 #include "sim/full_system.hh"
 
+#include "debug/LVPUnit.hh"
+#include "cpu/o3/lvp_unit.hh"
+
 // clang complains about std::set being overloaded with Packet::set if
 // we open up the entire namespace std
 using std::list;
@@ -62,8 +65,9 @@ namespace gem5
 namespace o3
 {
 
-Decode::Decode(CPU *_cpu, const BaseO3CPUParams &params)
+Decode::Decode(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
     : cpu(_cpu),
+      lvp_unit(lvpunit),
       renameToDecodeDelay(params.renameToDecodeDelay),
       iewToDecodeDelay(params.iewToDecodeDelay),
       commitToDecodeDelay(params.commitToDecodeDelay),
@@ -667,6 +671,20 @@ Decode::decodeInsts(ThreadID tid)
             --insts_available;
 
             continue;
+        }
+        
+        // ENABLE_LVP
+        if (inst->isLoad())
+        {
+            lvp_unit->predict(inst);
+            DPRINTF(LVPUnit, "Fetch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d  predVal:%u\n",
+                    inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue());
+        }
+        else
+        {
+            inst->setLdPredictible(false);
+            inst->setLdConstant(false);
+            inst->PredictedLdValue(0);
         }
 
         // Also check if instructions have no source registers.  Mark

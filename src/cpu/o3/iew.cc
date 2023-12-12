@@ -931,12 +931,10 @@ void IEW::dispatchInsts(ThreadID tid)
            
            
             DPRINTF(IEW, "[tid:%i] Issue: Memory instruction encountered, adding to LSQ.\n", tid);
-            
 
             // Reserve a spot in the load store queue for this
             // memory access.
             ldstQueue.insertLoad(inst);
-
 
             // If the load is constant, then we can skip the memory access
             if (ENABLE_LVP == true)

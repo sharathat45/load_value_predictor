@@ -48,6 +48,7 @@
 #include "cpu/o3/dyn_inst_ptr.hh"
 #include "cpu/o3/limits.hh"
 #include "cpu/timebuf.hh"
+#include "cpu/o3/lvp_unit.hh"
 
 namespace gem5
 {
@@ -98,7 +99,7 @@ class Decode
 
   public:
     /** Decode constructor. */
-    Decode(CPU *_cpu, const BaseO3CPUParams &params);
+    Decode(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit);
 
     void startupStage();
 
@@ -206,6 +207,8 @@ class Decode
     // Interfaces to objects outside of decode.
     /** CPU interface. */
     CPU *cpu;
+    
+    LVPUnit *lvp_unit;
 
     /** Time buffer interface. */
     TimeBuffer<TimeStruct> *timeBuffer;
