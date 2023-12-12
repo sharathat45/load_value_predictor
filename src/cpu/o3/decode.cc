@@ -90,6 +90,8 @@ Decode::Decode(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
         squashInst[tid] = nullptr;
         squashAfterDelaySlot[tid] = 0;
     }
+
+    ENABLE_LVP = params.enableLVP;
 }
 
 void
@@ -674,7 +676,7 @@ Decode::decodeInsts(ThreadID tid)
         }
         
         // ENABLE_LVP
-        if (inst->isLoad())
+        if (ENABLE_LVP && inst->isLoad())
         {
             lvp_unit->predict(inst);
             DPRINTF(LVPUnit, "Fetch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d  predVal:%u\n",

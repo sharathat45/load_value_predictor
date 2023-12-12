@@ -279,6 +279,9 @@ class Decode
     /** number of Active Threads*/
     ThreadID numThreads;
 
+    /** Whether LVP is enabled */
+    bool ENABLE_LVP;
+
     /** List of active thread ids */
     std::list<ThreadID> *activeThreads;
 
