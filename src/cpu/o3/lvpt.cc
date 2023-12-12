@@ -57,7 +57,7 @@ bool LVPT::valid(Addr loadAddr, ThreadID tid)
     }
 }
 
-uint8_t LVPT::lookup(Addr loadAddr, ThreadID tid)
+uint64_t LVPT::lookup(Addr loadAddr, ThreadID tid)
 {
     unsigned lvpt_idx = getIndex(loadAddr, tid);
 
@@ -66,7 +66,7 @@ uint8_t LVPT::lookup(Addr loadAddr, ThreadID tid)
     assert(lvpt_idx < numEntries);
 
     if (lvpt[lvpt_idx].valid && lvpt[lvpt_idx].tid == tid) {
-        uint8_t value = lvpt[lvpt_idx].value;
+        uint64_t value = lvpt[lvpt_idx].value;
         DPRINTF(LVPUnit, "found pred val 0x%x\n", value);
         return value;
     } else {
@@ -75,7 +75,7 @@ uint8_t LVPT::lookup(Addr loadAddr, ThreadID tid)
     }
 }
 
-void LVPT::update(Addr loadAddr, uint8_t loadValue, ThreadID tid)
+void LVPT::update(Addr loadAddr, uint64_t loadValue, ThreadID tid)
 {
     unsigned lvpt_idx = getIndex(loadAddr, tid);
 

@@ -110,11 +110,11 @@ bool CVU::invalidate(Addr instPC, Addr StdataAddr, ThreadID tid)
 }
 
 // 
-inline void CVU::replacement(unsigned instr_idx, Addr data_addr, uint8_t data, ThreadID tid)
+inline void CVU::replacement(unsigned instr_idx, Addr data_addr, uint64_t data, ThreadID tid)
 {
     unsigned char LRU = 0xff;
     unsigned LRU_idx = 0;
-    uint8_t old_data_addr;
+    Addr old_data_addr;
     
     // More efficient way?
     for (unsigned i = 0;i < numEntries; i++){
@@ -137,7 +137,7 @@ inline void CVU::replacement(unsigned instr_idx, Addr data_addr, uint8_t data, T
     return;
 }
 
-void CVU::update(Addr instPc, Addr data_addr, uint8_t data, ThreadID tid)
+void CVU::update(Addr instPc, Addr data_addr, uint64_t data, ThreadID tid)
 {
     unsigned instr_idx = getIndex(instPc, tid);
 

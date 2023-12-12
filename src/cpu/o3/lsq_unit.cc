@@ -1586,7 +1586,10 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
         // memcpy(load_inst->memData, &(inst->PredictedLdValue()), request->mainReq()->getSize());
         // *load_inst->memData = inst->PredictedLdValue();
 
-        *load_inst->memData = load_inst->PredictedLdValue();
+        // *load_inst->memData = load_inst->PredictedLdValue();
+
+        uint64_t temp_ldval = load_inst->PredictedLdValue();
+        memcpy(load_inst->memData, &temp_ldval, load_inst->effSize);
 
         DPRINTF(LVPUnit, "LSQ: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u actualVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
                 load_inst->threadNumber, load_inst->seqNum, (load_inst->pcState()).instAddr(), load_inst->memOpDone(), load_inst->PredictedLdValue(), *load_inst->memData, load_inst->effAddr, load_inst->isInLSQ(), load_inst->readLdConstant());
