@@ -17,7 +17,7 @@ COMMIT_END =  1e3d7d0
 
 BENCHMARK_CONFIG = configs/spec/spec_se.py
 DEBUG_CLASS = LVPUnit
-DEBUG = 0
+DEBUG = 1
 
 ENABLE_LVP = 1
 

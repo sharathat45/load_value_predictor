@@ -40,20 +40,21 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     ThreadID tid = inst->threadNumber;
     const PCStateBase &pc = inst->pcState();
 
-    // Lookup the prediction state for this instruction in the LCT and check if it's predictable
-    uint8_t counter_val = lct.lookup(tid, pc.instAddr());
-    bool is_predictable = lct.getPrediction(counter_val);
-    inst->setLdPredictible(is_predictable);
-    inst->setLdConstant(counter_val == 3);
-
-    stats.LCTLookups += 1;
-    stats.LCTPredictable += is_predictable;
-
     // Lookup the predicted load value for this instruction
     uint64_t pred_ld_val = lvpt.lookup(pc.instAddr(), tid);
+    bool lvpt_valid = lvpt.valid(pc.instAddr(), tid);
     inst->PredictedLdValue(pred_ld_val);
 
     stats.LVPTLookups++;
+
+    // Lookup the prediction state for this instruction in the LCT and check if it's predictable
+    uint8_t counter_val = lct.lookup(tid, pc.instAddr());
+    bool is_predictable = lct.getPrediction(counter_val);
+    inst->setLdPredictible(is_predictable && lvpt_valid);
+    inst->setLdConstant(counter_val == 3 && lvpt_valid);
+
+    stats.LCTLookups += 1;
+    stats.LCTPredictable += is_predictable;
 
     // Debug stuff
     if (is_predictable == false) 
@@ -86,7 +87,7 @@ void LVPUnit::update(const DynInstPtr &inst)
 {
     ThreadID tid = inst->threadNumber;
     const PCStateBase &pc = inst->pcState();
-    uint64_t mem_ld_value = *(inst->memData);
+    uint64_t mem_ld_value = *((uint64_t*)(inst->memData));
 
     // Lookup this instruction in the LVPT
     bool valid_lvpt_entry = lvpt.valid(pc.instAddr(), tid);
@@ -113,12 +114,11 @@ void LVPUnit::update(const DynInstPtr &inst)
         }
         else
         {
-            // If the prediction in the LVPT matches the prediction used by the instruction, we're good
-            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:0x%x pred_ld_value:0x%x  mem_ld_value=0x%x LVPT ENTRY == PREDICTED VALUE\n",
-                    inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
-
             if (pred_ld_value == mem_ld_value)
             {
+                DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:0x%x pred_ld_value:0x%x  mem_ld_value=0x%x MEM VALUE == PREDICTED VALUE\n",
+                        inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
+
                 // Increment the LCT's saturating counter
                 lct.update(tid, pc.instAddr(), true, false);
 
@@ -130,6 +130,9 @@ void LVPUnit::update(const DynInstPtr &inst)
             }
             else
             {
+                DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:0x%x pred_ld_value:0x%x  mem_ld_value=0x%x MEM VALUE != PREDICTED VALUE\n",
+                        inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
+
                 // Decrement the LCT's saturating counter
                 lct.update(tid, pc.instAddr(), false, false);
 
@@ -154,7 +157,10 @@ void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {
     DPRINTF(LVPUnit, "cvu_invalidate: [tid:%i] [sn:%llu] PC:0x%x data_addr:0x%x\n",
             inst->threadNumber, inst->seqNum, pc.instAddr(), inst->effAddr);
 
-    cvu.invalidate(instPC,StdataAddr,tid);
+    if (cvu.invalidate(instPC,StdataAddr,tid)) {
+        // For now if we had a CVU invalidation, downgrade the LCT prediction counter
+        lct.update(tid, pc.instAddr(), false, false);
+    }
 
     return;
 }

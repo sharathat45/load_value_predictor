@@ -1164,8 +1164,8 @@ void IEW::executeInsts()
                     // wait until commit will be late
                     lvp_unit->cvu_invalidate(inst);
 
-                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%%x SW Invalidate\n",
-                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr);
+                    // DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:0x%x SW Invalidate\n",
+                    //         inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr);
                 }
 
                 if (inst->isTranslationDelayed() &&
@@ -1369,17 +1369,17 @@ void IEW::writebackInsts()
                     lvp_unit->update(inst);
 
                     if (inst->readLdConstant()) {
-                        if (inst->PredictedLdValue() != *(inst->memData)) {
+                        if (memcmp(&(inst->PredictedLdValue()), inst->memData, 8)) {
                             DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x pred_val:0x%x != mem_val:0x%x *** MISMATCH ***\n",
-                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->PredictedLdValue(), *(inst->memData));
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->PredictedLdValue(), *((uint64_t*)(inst->memData)));
                         } else {
                             DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x pred_val:0x%x == mem_val:0x%x\n",
-                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->PredictedLdValue(), *(inst->memData));
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->PredictedLdValue(), *((uint64_t*)(inst->memData)));
                         }
                     }
                 }
 
-                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu data_Addr:%llu isInLSQ:%d constantld:%d \n",
+                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:0x%x data_Addr:0x%x isInLSQ:%d constantld:%d \n",
                         inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
             }
         }
