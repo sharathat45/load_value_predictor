@@ -44,6 +44,7 @@ from m5.objects.BaseCPU import BaseCPU
 from m5.objects.FUPool import *
 #from m5.objects.O3Checker import O3Checker
 from m5.objects.BranchPredictor import *
+from m5.objects.ValuePredictor import *
 
 class SMTFetchPolicy(ScopedEnum):
     vals = [ 'RoundRobin', 'Branch', 'IQCount', 'LSQCount' ]
@@ -180,3 +181,5 @@ class BaseO3CPU(BaseCPU):
     instShiftAmt = Param.Unsigned(2, "Number of bits to shift instructions by")
     CVUnumEntries = Param.Unsigned(1024, "Number of CVU entries")
     enableLVP = Param.Bool(False, "Enable load value prediction")
+
+    valuePred = Param.ValuePredictor(LVP(), "Value Predictor")

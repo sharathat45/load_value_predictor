@@ -24,7 +24,8 @@ namespace o3
 {
 
 IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
-    : issueToExecQueue(params.backComSize, params.forwardComSize),
+    : valuePred(nullptr),
+      issueToExecQueue(params.backComSize, params.forwardComSize),
       cpu(_cpu),
       lvp_unit(lvpunit),
       instQueue(_cpu, this, params),
@@ -57,6 +58,8 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
     _status = Active;
     exeStatus = Running;
     wbStatus = Idle;
+
+    valuePred  = params->valuePred;
 
     // Setup wire to read instructions coming from issue.
     fromIssue = issueToExecQueue.getWire(-issueToExecuteDelay);
@@ -937,8 +940,9 @@ void IEW::dispatchInsts(ThreadID tid)
 
             if (inst->numDestRegs() == 1 && inst->isInteger())
             {
-                predict_value = lvp_unit->predict(inst);
+                predict_value = valuePred->predict(inst->staticInst, inst_addr, value);
             }
+
 
             // Predictor makes a succesful prediction.
             if (predict_value)
@@ -951,6 +955,7 @@ void IEW::dispatchInsts(ThreadID tid)
                 instQueue.wakeDependents(inst);
                 scoreboard->setReg(inst->renamedDestIdx(0));
             }
+            inst->setValuePredicted(predict_value, value);
         }
 
         // Otherwise issue the instruction just fine.
@@ -1284,29 +1289,28 @@ void IEW::executeInsts()
                 if (inst->isExecuted() && inst->numDestRegs() == 1 && inst->isInteger() && inst->isLoad())
                 {
                     PhysRegIdPtr reg = inst->renamedDestIdx(0);
-                    uint64_t actual_ld_value = uint64_t(inst->cpu->getReg(reg));
+                    RegVal trueValue = uint64_t(inst->cpu->getReg(reg));
                     
                     const PCStateBase &pc = inst->pcState();
                     Addr inst_addr = pc.instAddr();
 
-                    bool is_pred_correct = false; 
-
-                    if (inst->readLdPredictible())
+                    bool valueTaken = false;     
+                    if (inst->isValuePredicted())
                     {
-                        uint64_t predictedValue = inst->PredictedLdValue();
+                        RegVal predictedValue = inst->getValuePredicted();
                 
-                        is_pred_correct = (actual_ld_value == predictedValue);
+                        valueTaken = trueValue == predictedValue;
 
-                        lvp_unit->update(inst, actual_ld_value);
+                        valuePred->update(inst->staticInst, inst_addr, inst->isValuePredicted(), valueTaken, trueValue);
 
-                        if (is_pred_correct==false)
+                        if (valueTaken==false)
                         {
                             squashDueToLVP(inst, tid);    
                         }
                     }
                     else
                     {
-                        lvp_unit->update(inst, actual_ld_value);
+                        valuePred->update(inst->staticInst, inst_addr, inst->isValuePredicted(), valueTaken, trueValue);
                     }
 
                 }

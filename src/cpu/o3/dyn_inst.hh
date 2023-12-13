@@ -189,7 +189,9 @@ class DynInst : public ExecContext, public RefCounted
         HtmFromTransaction,
         LdPredictible,
         LdConstant,
+        ValuePredicted,
         MaxFlags
+
     };
 
   private:
@@ -241,6 +243,9 @@ class DynInst : public ExecContext, public RefCounted
 
     //Predicted ld value 
     uint64_t predictedLdValue;
+
+    /*Predicted Value if successful VP*/
+    RegVal VPPredictedValue;
 
   public:
     size_t numSrcs() const { return _numSrcs; }
@@ -551,6 +556,26 @@ class DynInst : public ExecContext, public RefCounted
 
     bool
     readLdConstant() { return instFlags[LdConstant];}
+
+    
+    void setValuePredicted(bool predict_value, RegVal value)
+    {
+        instFlags[ValuePredicted] = predict_value;
+        if (predict_value)
+        {
+            VPPredictedValue = value;
+        }
+    }
+
+    bool isValuePredicted()
+    {
+        return instFlags[ValuePredicted];
+    }
+
+    RegVal getValuePredicted()
+    {
+        return VPPredictedValue;
+    }
 
     /** Returns whether the instruction mispredicted. */
     bool

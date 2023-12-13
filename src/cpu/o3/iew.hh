@@ -55,6 +55,8 @@
 #include "debug/IEW.hh"
 #include "sim/probe/probe.hh"
 #include "cpu/o3/lvp_unit.hh"
+#include "cpu/vpred/vpred_unit.hh"
+
 
 namespace gem5
 {
@@ -127,6 +129,10 @@ class IEW
     ProbePointArg<DynInstPtr> *ppToCommit;
 
     LVPUnit *lvpunit;
+
+     /*Value Predictor*/
+    VPredUnit *valuePred;
+
   public:
     /** Constructs a IEW with the given parameters. */
     IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit);
@@ -342,6 +348,7 @@ class IEW
 
     /** Scoreboard pointer. */
     Scoreboard* scoreboard;
+
 
   private:
     /** CPU pointer. */
