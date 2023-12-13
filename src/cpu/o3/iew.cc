@@ -1164,10 +1164,9 @@ void IEW::executeInsts()
                     // wait until commit will be late
                     lvp_unit->cvu_invalidate(inst);
 
-                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%llu SW Invalidate\n",
+                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%%x SW Invalidate\n",
                             inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr);
                 }
-                
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {
@@ -1361,11 +1360,23 @@ void IEW::writebackInsts()
 
             iewStats.writebackCount[tid]++;
 
+            // If we're writing back a load instruction, check if it was predicted correctly
             if (ENABLE_LVP == true && inst->isLoad())
             {
-                if (inst->memOpDone() && inst->memData != nullptr && inst->readLdConstant() == false)
+                if (inst->memOpDone() && inst->memData != nullptr)
                 {
+                    // Update the LVP unit with the status of this prediction if the memory access is done
                     lvp_unit->update(inst);
+
+                    if (inst->readLdConstant()) {
+                        if (inst->PredictedLdValue() != *(inst->memData)) {
+                            DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x pred_val:0x%x != mem_val:0x%x *** MISMATCH ***\n",
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->PredictedLdValue(), *(inst->memData));
+                        } else {
+                            DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x pred_val:0x%x == mem_val:0x%x\n",
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->PredictedLdValue(), *(inst->memData));
+                        }
+                    }
                 }
 
                 DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu data_Addr:%llu isInLSQ:%d constantld:%d \n",

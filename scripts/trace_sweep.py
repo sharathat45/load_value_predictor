@@ -32,6 +32,6 @@ def process_trace_file(input_file, output_file):
 
 
 if __name__ == "__main__":
-    input_file = "/home/ecegridfs/a/socet152/load_value_predictor/m5out/trace.out"
-    output_file = "/home/ecegridfs/a/socet152/load_value_predictor/m5out/extract.out"
+    input_file = "m5out/trace.out"
+    output_file = "m5out/extract.out"
     process_trace_file(input_file, output_file)
