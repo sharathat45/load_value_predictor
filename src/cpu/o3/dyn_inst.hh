@@ -246,10 +246,9 @@ class DynInst : public ExecContext, public RefCounted
     size_t numSrcs() const { return _numSrcs; }
     size_t numDests() const { return _numDests; }
 
-    // Returns the
 
-    const uint64_t &PredictedLdValue() const { return predictedLdValue; }
-    void PredictedLdValue(const uint64_t ld_value) { predictedLdValue = ld_value; }
+    uint64_t PredictedLdValue() { return predictedLdValue; }
+    void PredictedLdValue(uint64_t ld_value) { predictedLdValue = ld_value; }
 
     // Returns the flattened register index of the idx'th destination
     // register.

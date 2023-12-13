@@ -752,6 +752,7 @@ Decode::decodeInsts(ThreadID tid)
     if (toRenameIndex) {
         wroteToTimeBuffer = true;
     }
+    
 }
 
 } // namespace o3

@@ -32,9 +32,10 @@ LVPUnit::LVPUnit(CPU *_cpu, const BaseO3CPUParams &params)
             params.LVPTEntries, // for creating LVPT index
             instShiftAmt,
             params.numThreads),
-        numEntries(params.LVPTEntries)
+        numEntries(params.LVPTEntries),
+        lvp_table(numEntries, LVPEntry())
 {
-    lvp_table.resize(numEntries);
+    
     indexMask = numEntries - 1;
 
     for (unsigned i = 0; i < numEntries; ++i) {
@@ -92,7 +93,7 @@ bool LVPUnit::predict(const DynInstPtr &inst)
             inst -> setLdConstant(counter_val == 3);
             inst -> setLdPredictible(true);
     
-            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] PC:0x%x (idx:%u) ld_val:%llu LVP predicted predictible\n", inst->threadNumber, inst->seqNum, inst->pcState(), ld_predict_val, idx);
+            DPRINTF(LVPUnit, "lvpt_pred: [tid:%i] [sn:%llu] PC:0x%x (idx:%u) ld_val:%llu LVP predicted predictible\n", inst->threadNumber, inst->seqNum,  pc.instAddr(), ld_predict_val, idx);
             return true;
         }
         else       
@@ -237,6 +238,11 @@ LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
 {
     LVPTHitRatio.precision(6);
 }
+
+ LVPUnit* LVPUnit::create(CPU *_cpu, const BaseO3CPUParams &params)
+ {
+    return new LVPUnit(_cpu, params);
+ }
 
 } // namespace o3
 } // namespace gem5

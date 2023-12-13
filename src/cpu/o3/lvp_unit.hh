@@ -81,20 +81,22 @@ class LVPUnit : public SimObject
     /** The CVU */
     CVU cvu;
 
-    uint32_t numEntries;
+    unsigned numEntries;
 
     struct LVPEntry
     {
         bool valid = false;
         uint8_t cntr = 0;
-        Addr data_addr;
-        uint64_t data_value;
+        Addr data_addr  = 0;
+        uint64_t data_value = 0;
     };
 
     std::vector<LVPEntry> lvp_table;
     unsigned indexMask;
 
     inline unsigned getIndex(Addr inst_addr);
+    LVPUnit* create(CPU *_cpu, const BaseO3CPUParams &params);
+
 
 };
 

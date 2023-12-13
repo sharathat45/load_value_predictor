@@ -803,24 +803,7 @@ void IEW::dispatch(ThreadID tid)
 
 void IEW::ld_value_predict(const DynInstPtr &inst)
 {
-    bool predict_value = false;
-
-    if (inst->numDestRegs() == 1 && inst->isInteger())
-    {
-        predict_value = lvp_unit->predict(inst);
-    }
-
-    // Predictor makes a succesful prediction.
-    if (predict_value)
-    {
-        uint64_t predicted_value = inst->PredictedLdValue();
-
-        //const RegId& reg = inst->destRegIdx(0);
-	    PhysRegIdPtr reg = inst->renamedDestIdx(0);
-        inst->cpu->setReg(reg, predicted_value);
-	    instQueue.wakeDependents(inst);
-	    scoreboard->setReg(inst->renamedDestIdx(0));
-    }
+    return;
 }
 
 void IEW::squashDueToLVP(const DynInstPtr& inst, ThreadID tid)
@@ -828,7 +811,8 @@ void IEW::squashDueToLVP(const DynInstPtr& inst, ThreadID tid)
     DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Squashing from a specific instruction, PC:0x%x "
             "\n", tid, inst->seqNum, (inst->pcState()).instAddr() );
 
-    if (!toCommit->squash[tid] || inst->seqNum < toCommit->squashedSeqNum[tid]) {
+    if (!toCommit->squash[tid] || inst->seqNum < toCommit->squashedSeqNum[tid]) 
+    {
         toCommit->squash[tid] = true;
         toCommit->squashedSeqNum[tid] = inst->seqNum;
         set(toCommit->pc[tid], inst->pcState());
@@ -934,11 +918,6 @@ void IEW::dispatchInsts(ThreadID tid)
             break;
         }
 
-        if(ENABLE_LVP)
-        {
-            ld_value_predict(inst);
-        }
-
         // hardware transactional memory
         // CPU needs to track transactional state in program order.
         const int numHtmStarts = ldstQueue.numHtmStarts(tid);
@@ -952,6 +931,27 @@ void IEW::dispatchInsts(ThreadID tid)
             inst->clearHtmTransactionalState();
         }
 
+        if(ENABLE_LVP && inst->isLoad())
+        {
+            bool predict_value = false;
+
+            if (inst->numDestRegs() == 1 && inst->isInteger())
+            {
+                predict_value = lvp_unit->predict(inst);
+            }
+
+            // Predictor makes a succesful prediction.
+            if (predict_value)
+            {
+                uint64_t predicted_value = inst->PredictedLdValue();
+
+                //const RegId& reg = inst->destRegIdx(0);
+                PhysRegIdPtr reg = inst->renamedDestIdx(0);
+                inst->cpu->setReg(reg, predicted_value);
+                instQueue.wakeDependents(inst);
+                scoreboard->setReg(inst->renamedDestIdx(0));
+            }
+        }
 
         // Otherwise issue the instruction just fine.
         if (inst->isAtomic()) {
@@ -1281,7 +1281,7 @@ void IEW::executeInsts()
 
             if (ENABLE_LVP) 
             {
-                if (inst->isExecuted() && inst->numDestRegs() == 1 && inst->isInteger())
+                if (inst->isExecuted() && inst->numDestRegs() == 1 && inst->isInteger() && inst->isLoad())
                 {
                     PhysRegIdPtr reg = inst->renamedDestIdx(0);
                     uint64_t actual_ld_value = uint64_t(inst->cpu->getReg(reg));
