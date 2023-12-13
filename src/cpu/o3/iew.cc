@@ -1297,12 +1297,16 @@ void IEW::executeInsts()
                     const PCStateBase &pc = inst->pcState();
                     Addr inst_addr = pc.instAddr();
 
+                    DPRINTF(LVPUnit, "isValuePredicted:%d\n", inst->isValuePredicted());
+
                     bool valueTaken = false;     
                     if (inst->isValuePredicted())
                     {
                         RegVal predictedValue = inst->getValuePredicted();
                 
                         valueTaken = trueValue == predictedValue;
+
+                        DPRINTF(LVPUnit, "update_vpred: PC:0x%x predValue:0x%x trueValue:0x%x\n", inst_addr, predictedValue, trueValue);
 
                         valuePred->update(inst->staticInst, inst_addr, inst->isValuePredicted(), valueTaken, trueValue);
 

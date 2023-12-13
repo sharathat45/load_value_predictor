@@ -38,28 +38,22 @@ class VPredUnit : public SimObject
         
         virtual void updateTable(Addr inst_addr, bool isValuePredicted, bool isValueTaken, RegVal &trueValue) = 0;
 
-    // private:
-        // /*Number of Possible Value Predictions*/
-        // Stats::Scalar lookups;
+    private:
+        struct VPredUnitStats : public statistics::Group
+        {
+            VPredUnitStats(statistics::Group *parent);
 
-        // /*Number of Values Predicted.*/
-        // Stats::Scalar numPredicted;
-
-        // /*Number of Correct Predictions.*/
-        // Stats::Scalar numCorrectPredicted;
-
-        // /*Number of Incorrect Predictions.*/
-        // Stats::Scalar numIncorrectPredicted;
-
-        // /*Number of Load Values Predicted.*/
-        // Stats::Scalar numLoadPredicted;
-
-        // /*Number of Load Values Correctly Predicted.*/
-        // Stats::Scalar numLoadCorrectPredicted;
-
-        // Stats::Formula valuePredAccuracy;
-
-        // Stats::Formula valuePredCoverage;
+            /** Stat for number of lookups. */
+            statistics::Scalar lookups;
+            /** Stat for number of lds predicted. */
+            statistics::Scalar predTotal;
+            /** Stat for number of lds predicted correctly. */
+            statistics::Scalar predCorrect;
+            /** Stat for number of lds predicted incorrectly. */
+            statistics::Scalar predIncorrect;
+            /** Stat for fraction of predicted lds predicted correctly. */
+            statistics::Formula predAccuracy;
+        } stats;
 };
 } // namespace gem5
 #endif // __CPU_PRED_VPRED_UNIT_HH__

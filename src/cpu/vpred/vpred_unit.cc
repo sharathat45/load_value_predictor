@@ -3,75 +3,35 @@
 namespace gem5
 {
 
-VPredUnit::VPredUnit(const Params &params)
-:SimObject (params)
+VPredUnit::VPredUnit(const Params &params) :
+	SimObject (params),
+	stats(this)
 { }
 
-// void 
-// VPredUnit::regStats()
-// {
-//     SimObject::regStats();
-//     lookups
-//         .name(name() + ".lookups")
-//         .desc("Number of VP lookups")
-//         ;
-
-//     numPredicted
-//         .name(name() + ".numPredicted")
-//         .desc("Number of value predictions")
-//         ;
-
-// 	numCorrectPredicted
-//         .name(name() + ".numCorrectPredicted")
-//         .desc("Number of value predictions")
-//         ;
-
-//     numIncorrectPredicted
-//         .name(name() + ".numIncorrectPredicted")
-//         .desc("Number of incorrect value predictions")
-//         ;
-	
-// 	numLoadPredicted
-//         .name(name() + ".numLoadPredicted")
-//         .desc("Number of Load value predictions")
-//         ;
-
-// 	numLoadCorrectPredicted
-//         .name(name() + ".numLoadCorrectPredicted")
-//         .desc("Number of Correct Load value predictions")
-//         ;
-
-// 	valuePredAccuracy
-// 		.name(name() + ".valuePredAccuracy")
-//         .desc("VP Accuracy")
-// 		.precision(6);
-//         ;
-
-// 	valuePredAccuracy = numCorrectPredicted/numPredicted;
-
-// 	valuePredCoverage
-// 		.name(name() + ".valuePredCoverage")
-//         .desc("VP Coverage")
-// 		.precision(6);
-//         ;
-
-// 	valuePredCoverage = numCorrectPredicted/lookups; 
-// }
-
+VPredUnit::VPredUnitStats::VPredUnitStats(statistics::Group *parent)
+    : statistics::Group(parent, "vpred"),
+	ADD_STAT(lookups, statistics::units::Count::get(),
+			"Number of prediction unit lookups"),
+	ADD_STAT(predTotal, statistics::units::Count::get(),
+			"Number of values predicted in total"),
+	ADD_STAT(predCorrect, statistics::units::Count::get(),
+			"Number of values predicted correctly"),
+	ADD_STAT(predIncorrect, statistics::units::Count::get(),
+			"Number of values predicted incorrectly"),
+	ADD_STAT(predAccuracy, statistics::units::Ratio::get(),
+			"Fraction of predicted load values that were correctly predicted",
+			predCorrect / predTotal)
+{ }
 
 bool
 VPredUnit::predict(const StaticInstPtr &inst, Addr inst_addr, RegVal &value)
 {
-	// ++lookups;
+	++stats.lookups;
 
 	bool prediction= lookup(inst_addr, value);
 
-	// if (prediction)
-	// {
-	// 	++numPredicted;
-	// 	if (inst->isLoad())
-	// 		++numLoadPredicted;
-	// }
+	stats.predTotal += prediction;
+
 	return prediction;
 }
 
@@ -90,6 +50,14 @@ void
 VPredUnit::update(const StaticInstPtr &inst, Addr inst_addr, bool isValuePredicted, bool isValueTaken, RegVal &trueValue)
 {
 	updateTable(inst_addr, isValuePredicted, isValueTaken, trueValue);
+
+	if (isValuePredicted) {
+		if (isValueTaken) {
+			++stats.predCorrect;
+		} else {
+			++stats.predIncorrect;
+		}
+	}
 
 	// if (isValuePredicted)
 	// {
