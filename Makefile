@@ -32,7 +32,7 @@ endif
 .PHONY: run clean build patch benchmark hello debug sjeng lbm milc astar leslie3d namd 
 
 $(EXECUTABLE): $(SRC_C)
-	$(CC) $(SRC_C) -o $(EXECUTABLE) -lm5
+	$(CC) $(SRC_C) -o $(EXECUTABLE) -lm5 
 
 build:
 	scons USE_HDF5=0 -j `nproc` $(MODEL)

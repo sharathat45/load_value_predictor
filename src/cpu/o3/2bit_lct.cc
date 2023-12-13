@@ -25,21 +25,13 @@ LCT::LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsign
     if (!isPowerOf2(lctPredictorSets)) {
         fatal("LCT: Invalid number of LCT predictor sets! Check lctCtrBits.\n");
     }
-
-    DPRINTF(LVPUnit, "LCT: index mask: %#x\n", indexMask);
-
-    DPRINTF(LVPUnit, "LCT: local predictor size: %i\n", lctSize);
-
-    DPRINTF(LVPUnit, "LCT: local counter bits: %i\n", lctCtrBits);
-
-    DPRINTF(LVPUnit, "LCT: instruction shift amount: %i\n", instShiftAmt);
 }
 
 uint8_t LCT::lookup(ThreadID tid, Addr inst_addr)
 {
     unsigned lct_idx = getLocalIndex(inst_addr);
 
-    DPRINTF(LVPUnit, "LCT: Looking up 0x%x (idx %u) for tid %u\n", inst_addr, lct_idx, tid);
+    DPRINTF(LVPUnit, "LCT: Lookup PC:0x%x (idx %u)\n", inst_addr, lct_idx, tid);
 
     uint8_t counter_val = lctCtrs[lct_idx];
 
@@ -56,25 +48,18 @@ void LCT::update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squ
 {
     unsigned lct_idx;
 
-    // No state to restore, and we do not update on the wrong path.
-    if (squashed) {
-        return;
-    }
-
     // Update the local predictor.
     lct_idx = getLocalIndex(inst_addr);
-
-    DPRINTF(LVPUnit, "LCT: Updating 0x%x (idx %u) for tid %u with pred outcome:%d\n", inst_addr, lct_idx, tid, prediction_outcome);
 
     if (prediction_outcome)
     {
         lctCtrs[lct_idx]++;
-        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated ++\n", inst_addr);
+        DPRINTF(LVPUnit, "LCT: Update PC:0x%x (idx %u) cntr ++ %u\n", inst_addr, lct_idx, (uint8_t)lctCtrs[lct_idx]);
     }
     else
     {
-        lctCtrs[lct_idx]--;
-        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated --\n", inst_addr);
+       lctCtrs[lct_idx]--;
+       DPRINTF(LVPUnit, "LCT: Update PC:0x%x (idx %u) cntr -- %u\n", inst_addr, lct_idx, (uint8_t)lctCtrs[lct_idx]);
     }
 }
 
