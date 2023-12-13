@@ -24,9 +24,6 @@ class VPTT
         /** The entry's data address. */
         Addr addr;
 
-        /** The entry's load value. */
-        uint64_t value;
-
         /** The entry's thread id. */
         ThreadID tid;
 
@@ -46,41 +43,28 @@ class VPTT
     void reset();
 
     /** Looks up an address in the VPTT. Must call valid() first on the address.
-     *  @param loadAddr The address of the load to look up.
+     *  @param seq_num The sequence number of the instruction to lookup.
      *  @param tid The thread id.
-     *  @return Returns the predicted load value.
+     *  @return Returns 1 if the seq_num was found, 0 otherwise.
      */
-    uint64_t lookup(Addr loadAddr, ThreadID tid);
+    bool lookup(InstSeqNum seq_num, ThreadID tid, VPTTEntry& entry);
 
-    /** Checks if a load is in the VPTT.
-     *  @param loadAddr The address of the load to look up.
-     *  @param tid The thread id.
-     *  @return Whether or not the index is valid in the VPTT.
-     */
-    bool valid(Addr loadAddr, ThreadID tid);
-
-    /** Updates the VPTT with the value of a load.
-     *  @param loadAddr The address of the load being updated.
-     *  @param loadValue The value of the load being updated.
+    /** Inserts a predicted load instruction into the VPTT.
+     *  @param seq_num The sequence number of the instruction to insert.
+     *  @param loadAddr The address of the load being inserted.
      *  @param tid The thread id.
      */
-    void insert(Addr loadAddr, uint64_t loadValue, ThreadID tid);
+    void insert(InstSeqNum seq_num, Addr loadAddr, ThreadID tid);
 
     /** Deletes from the VPTT the entry for a load.
-     *  @param loadAddr The address of the load being updated.
+     *  @param seq_num The sequence number of the instruction to delete.
      *  @param tid The thread id.
      */
     void remove(InstSeqNum seq_num, ThreadID tid);
 
   private:
-    /** Returns the index into the VPTT, based on the load's address.
-     *  @param loadAddr The load to look up.
-     *  @return Returns the index into the VPTT.
-     */
-    inline unsigned getIndex(Addr loadAddr, ThreadID tid);
-
     /** The actual VPTT. */
-    std::vector<VPTTEntry> VPTT;
+    std::vector<VPTTEntry> vptt;
 
     /** The number of entries in the VPTT. */
     unsigned numEntries;
