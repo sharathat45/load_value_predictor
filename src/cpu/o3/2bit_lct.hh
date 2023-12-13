@@ -38,7 +38,7 @@ class LCT
 
   private:
    
-    inline unsigned getLocalIndex(Addr &inst_addr);
+    inline unsigned getLocalIndex(Addr inst_addr);
     const unsigned lctSize;
     const unsigned lctCtrBits;
     const unsigned lctPredictorSets;

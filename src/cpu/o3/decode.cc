@@ -674,21 +674,6 @@ Decode::decodeInsts(ThreadID tid)
 
             continue;
         }
-        
-        // ENABLE_LVP
-        if (ENABLE_LVP && inst->isLoad())
-        {
-            DPRINTF(LVPUnit, "Decode: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d  predVal:%u\n",
-                    inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue());
-
-            lvp_unit->predict(inst);
-        }
-        else
-        {
-            inst->setLdPredictible(false);
-            inst->setLdConstant(false);
-            inst->PredictedLdValue(0);
-        }
 
         // Also check if instructions have no source registers.  Mark
         // them as ready to issue at any time.  Not sure if this check

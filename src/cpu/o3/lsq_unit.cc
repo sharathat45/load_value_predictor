@@ -1572,68 +1572,32 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
             load_inst->seqNum, load_inst->pcState());
 
     
-    //If the load is still constant, then we can skip the memory access
-    if (ENABLE_LVP == true && load_inst->isVector() == false && load_inst->readLdConstant() == true && lvp_unit->cvu_valid(load_inst))
-    {
-        // Allocate memory if this is the first time a load is issued.
-        if (!load_inst->memData) 
-        {
-            load_inst->memData = new uint8_t[request->mainReq()->getSize()];
-        }
-        
-        uint64_t temp_ldval = load_inst->PredictedLdValue();
-        memcpy(load_inst->memData, &temp_ldval, load_inst->effSize);
-
-        DPRINTF(LVPUnit, "LSQ: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu actualVal:%llu data_Addr:%llu isInLSQ:%d constantld:%d \n",
-                load_inst->threadNumber, load_inst->seqNum, (load_inst->pcState()).instAddr(), load_inst->memOpDone(), load_inst->PredictedLdValue(), *load_inst->memData, load_inst->effAddr, load_inst->isInLSQ(), load_inst->readLdConstant());
-
-        PacketPtr data_pkt = new Packet(request->mainReq(), MemCmd::ReadReq);
-        data_pkt->dataStatic(load_inst->memData);
-        
-        if (request->isAnyOutstandingRequest()) {
-            assert(request->_numOutstandingPackets > 0);
-            // There are memory requests packets in flight already. This may happen if the store was not complete the
-            // first time this load got executed. Signal the senderSate That response packets should be discarded.
-            request->discard();
-        }
-
-        WritebackEvent *wb = new WritebackEvent(load_inst, data_pkt, this);
-
-        // We'll say this has a 1 cycle load-store forwarding latency for now.
-        // @todo: Need to make this a parameter.
-        cpu->schedule(wb, curTick());
-        load_entry.setRequest(nullptr);
-                
+   
+    // Allocate memory if this is the first time a load is issued.
+    if (!load_inst->memData) {
+        load_inst->memData = new uint8_t[request->mainReq()->getSize()];
     }
-    else
-    {
-        // Allocate memory if this is the first time a load is issued.
-        if (!load_inst->memData) {
-            load_inst->memData = new uint8_t[request->mainReq()->getSize()];
-        }
 
 
-        // hardware transactional memory
-        if (request->mainReq()->isHTMCmd()) {
-            // this is a simple sanity check
-            // the Ruby cache controller will set
-            // memData to 0x0ul if successful.
-            *load_inst->memData = (uint64_t) 0x1ull;
-        }
-
-        // For now, load throughput is constrained by the number of
-        // load FUs only, and loads do not consume a cache port (only
-        // stores do).
-        // @todo We should account for cache port contention
-        // and arbitrate between loads and stores.
-
-        // if we the cache is not blocked, do cache access
-        request->buildPackets();
-        request->sendPacketToCache();
-        if (!request->isSent())
-            iewStage->blockMemInst(load_inst);
-
+    // hardware transactional memory
+    if (request->mainReq()->isHTMCmd()) {
+        // this is a simple sanity check
+        // the Ruby cache controller will set
+        // memData to 0x0ul if successful.
+        *load_inst->memData = (uint64_t) 0x1ull;
     }
+
+    // For now, load throughput is constrained by the number of
+    // load FUs only, and loads do not consume a cache port (only
+    // stores do).
+    // @todo We should account for cache port contention
+    // and arbitrate between loads and stores.
+
+    // if we the cache is not blocked, do cache access
+    request->buildPackets();
+    request->sendPacketToCache();
+    if (!request->isSent())
+        iewStage->blockMemInst(load_inst);
 
     return NoFault;
 }

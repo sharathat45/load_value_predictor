@@ -33,49 +33,14 @@ class LVPUnit : public SimObject
     
     LVPUnit(CPU *_cpu, const BaseO3CPUParams &params);
 
-    /** Perform sanity checks after a drain. */
-    // void drainSanityCheck() const;
-
-    /**
-     * Predicts whether or not the ld instruction is predictible or not, and the value of the ld instruction if it is predictible.
-     * @param inst The ld instruction.
-     * @param ld_Value The predicted value is passed back through this parameter.
-     * @param tid The thread id.
-     * @return Returns if the ld is predictible or not.
-     */
     bool predict(const DynInstPtr &inst);
 
-    /**
-     * Tells the LCT to commit any updates until the given sequence number.
-     * @param done_sn The sequence number to commit any older updates up until.
-     * @param tid The thread id.
-     */
-    void update(const DynInstPtr &inst);
+    void update(const DynInstPtr &inst, uint64_t mem_ld_value);
 
     void cvu_invalidate(const DynInstPtr &inst);
 
     bool cvu_valid(const DynInstPtr &inst);
 
-    /**
-     * Squashes all outstanding updates until a given sequence number.
-     * @param squashed_sn The sequence number to squash any younger updates up
-     * until.
-     * @param tid The thread id.
-     */
-    // void squash(const InstSeqNum &squashed_sn, ThreadID tid);
-
-    /**
-     * Squashes all outstanding updates until a given sequence number, and
-     * corrects that sn's update with the proper ld val and predictible/not.
-     * @param squashed_sn The sequence number to squash any younger updates up
-     * until.
-     * @param corr_ldval The correct ld value.
-     * @param actually_predictible The correct lvp direction.
-     * @param tid The thread id.
-     */
-    // void squash(const InstSeqNum &squashed_sn, const uint64_t &corr_ldval, bool actually_predictible, ThreadID tid);
-        
-    // void dump();
 
   private:
     const unsigned numThreads;
@@ -115,6 +80,22 @@ class LVPUnit : public SimObject
      
     /** The CVU */
     CVU cvu;
+
+    uint32_t numEntries;
+
+    struct LVPEntry
+    {
+        bool valid = false;
+        uint8_t cntr = 0;
+        Addr data_addr;
+        uint64_t data_value;
+    };
+
+    std::vector<LVPEntry> lvp_table;
+    unsigned indexMask;
+
+    inline unsigned getIndex(Addr inst_addr);
+
 };
 
 } // namespace o3

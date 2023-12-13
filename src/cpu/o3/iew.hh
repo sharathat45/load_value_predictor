@@ -288,6 +288,9 @@ class IEW
     /** Sorts instructions coming from rename into lists separated by thread. */
     void sortInsts();
 
+    void ld_value_predict(const DynInstPtr &inst);
+    void squashDueToLVP(const DynInstPtr& inst, ThreadID tid);
+
   public:
     /** Ticks IEW stage, causing Dispatch, the IQ, the LSQ, Execute, and
      * Writeback to run for one cycle.

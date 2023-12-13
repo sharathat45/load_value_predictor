@@ -63,7 +63,7 @@ void LCT::update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squ
     }
 }
 
-inline unsigned LCT::getLocalIndex(Addr &inst_addr)
+inline unsigned LCT::getLocalIndex(Addr inst_addr)
 {
     return (inst_addr >> instShiftAmt) & indexMask;
 }

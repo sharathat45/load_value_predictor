@@ -5,7 +5,7 @@ BENCHMARKS=("sjeng" "leslie3d" "lbm" "astar" "milc" "namd")
 PREDICTION_DEGRADES=(0)
 
 # Create an empty output file
-echo -n > "part1/execresults/out.txt"
+echo -n > "analysis/execresults/out.txt"
 
 # Loop over the benchmarks and prediction degrade values
 for BENCHMARK in "${BENCHMARKS[@]}"; do

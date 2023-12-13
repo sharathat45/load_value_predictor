@@ -801,6 +801,46 @@ void IEW::dispatch(ThreadID tid)
     }
 }
 
+void IEW::ld_value_predict(const DynInstPtr &inst)
+{
+    bool predict_value = false;
+
+    if (inst->numDestRegs() == 1 && inst->isInteger())
+    {
+        predict_value = lvp_unit->predict(inst);
+    }
+
+    // Predictor makes a succesful prediction.
+    if (predict_value)
+    {
+        uint64_t predicted_value = inst->PredictedLdValue();
+
+        //const RegId& reg = inst->destRegIdx(0);
+	    PhysRegIdPtr reg = inst->renamedDestIdx(0);
+        inst->cpu->setReg(reg, predicted_value);
+	    instQueue.wakeDependents(inst);
+	    scoreboard->setReg(inst->renamedDestIdx(0));
+    }
+}
+
+void IEW::squashDueToLVP(const DynInstPtr& inst, ThreadID tid)
+{
+    DPRINTF(LVPUnit, "[tid:%i] [sn:%llu] Squashing from a specific instruction, PC:0x%x "
+            "\n", tid, inst->seqNum, (inst->pcState()).instAddr() );
+
+    if (!toCommit->squash[tid] || inst->seqNum < toCommit->squashedSeqNum[tid]) {
+        toCommit->squash[tid] = true;
+        toCommit->squashedSeqNum[tid] = inst->seqNum;
+        set(toCommit->pc[tid], inst->pcState());
+        toCommit->mispredictInst[tid] = NULL;
+        
+        /*Need not Squash Wrongly Predicted Value*/
+        toCommit->includeSquashInst[tid] = false;
+
+        wroteToTimeBuffer = true;
+    }
+}
+
 void IEW::dispatchInsts(ThreadID tid)
 {
     // Obtain instructions from skid buffer if unblocking, or queue from rename
@@ -892,6 +932,11 @@ void IEW::dispatchInsts(ThreadID tid)
 
             ++iewStats.lsqFullEvents;
             break;
+        }
+
+        if(ENABLE_LVP)
+        {
+            ld_value_predict(inst);
         }
 
         // hardware transactional memory
@@ -1158,15 +1203,15 @@ void IEW::executeInsts()
             } else if (inst->isStore()) {
                 fault = ldstQueue.executeStore(inst);
 
-                if (ENABLE_LVP == true)
-                {
-                    // should invalidate right after execute
-                    // wait until commit will be late
-                    lvp_unit->cvu_invalidate(inst);
+                // if (ENABLE_LVP == true)
+                // {
+                //     // should invalidate right after execute
+                //     // wait until commit will be late
+                //     lvp_unit->cvu_invalidate(inst);
 
-                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%llu SW Invalidate\n",
-                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr);
-                }
+                //     DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%llu SW Invalidate\n",
+                //             inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr);
+                // }
                 
 
                 if (inst->isTranslationDelayed() &&
@@ -1233,6 +1278,39 @@ void IEW::executeInsts()
             // Prevent testing for misprediction on load instructions,
             // that have not been executed.
             bool loadNotExecuted = !inst->isExecuted() && inst->isLoad();
+
+            if (ENABLE_LVP) 
+            {
+                if (inst->isExecuted() && inst->numDestRegs() == 1 && inst->isInteger())
+                {
+                    PhysRegIdPtr reg = inst->renamedDestIdx(0);
+                    uint64_t actual_ld_value = uint64_t(inst->cpu->getReg(reg));
+                    
+                    const PCStateBase &pc = inst->pcState();
+                    Addr inst_addr = pc.instAddr();
+
+                    bool is_pred_correct = false; 
+
+                    if (inst->readLdPredictible())
+                    {
+                        uint64_t predictedValue = inst->PredictedLdValue();
+                
+                        is_pred_correct = (actual_ld_value == predictedValue);
+
+                        lvp_unit->update(inst, actual_ld_value);
+
+                        if (is_pred_correct==false)
+                        {
+                            squashDueToLVP(inst, tid);    
+                        }
+                    }
+                    else
+                    {
+                        lvp_unit->update(inst, actual_ld_value);
+                    }
+
+                }
+            }
 
             if (inst->mispredicted() && !loadNotExecuted) {
                 fetchRedirect[tid] = true;
@@ -1360,17 +1438,6 @@ void IEW::writebackInsts()
             }
 
             iewStats.writebackCount[tid]++;
-
-            if (ENABLE_LVP == true && inst->isLoad())
-            {
-                if (inst->memOpDone() && inst->memData != nullptr && inst->readLdConstant() == false)
-                {
-                    lvp_unit->update(inst);
-                }
-
-                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%llu data_Addr:%llu isInLSQ:%d constantld:%d \n",
-                        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
-            }
         }
 
     }
