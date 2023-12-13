@@ -8,7 +8,7 @@
 #include "base/sat_counter.hh"
 #include "base/types.hh"
 #include "cpu/inst_seq.hh"
-#include "cpu/static_inst.hh"
+ #include "cpu/static_inst.hh"
 #include "params/LVP.hh"
 #include "sim/sim_object.hh"
 
@@ -19,11 +19,9 @@ class LVP : public VPredUnit
 {
     public:
         
-        LVP(const LVPParams *params);
-
+        LVP(const LVPParams &params);
         bool lookup(Addr inst_addr, RegVal &value);
         float getconf(Addr inst_addr, RegVal &value);
-
         void updateTable(Addr inst_addr, bool isValuePredicted, bool isValueTaken, RegVal &trueValue);
     
     private:
@@ -34,7 +32,7 @@ class LVP : public VPredUnit
         const unsigned lastCtrBits;
 
         /*Array of counters*/
-        std::vector<SatCounter> classificationTable;
+        std::vector<SatCounter8> classificationTable;
 
         /*Array of value predictions*/
         std::vector<RegVal> valuePredictionTable;

@@ -3,76 +3,75 @@
 namespace gem5
 {
 
-VPredUnit::VPredUnit(const Params *params)
-    : SimObject (params)
-{
-}
+VPredUnit::VPredUnit(const Params &params)
+:SimObject (params)
+{ }
 
-void 
-VPredUnit::regStats()
-{
-    SimObject::regStats();
-    lookups
-        .name(name() + ".lookups")
-        .desc("Number of VP lookups")
-        ;
+// void 
+// VPredUnit::regStats()
+// {
+//     SimObject::regStats();
+//     lookups
+//         .name(name() + ".lookups")
+//         .desc("Number of VP lookups")
+//         ;
 
-    numPredicted
-        .name(name() + ".numPredicted")
-        .desc("Number of value predictions")
-        ;
+//     numPredicted
+//         .name(name() + ".numPredicted")
+//         .desc("Number of value predictions")
+//         ;
 
-	numCorrectPredicted
-        .name(name() + ".numCorrectPredicted")
-        .desc("Number of value predictions")
-        ;
+// 	numCorrectPredicted
+//         .name(name() + ".numCorrectPredicted")
+//         .desc("Number of value predictions")
+//         ;
 
-    numIncorrectPredicted
-        .name(name() + ".numIncorrectPredicted")
-        .desc("Number of incorrect value predictions")
-        ;
+//     numIncorrectPredicted
+//         .name(name() + ".numIncorrectPredicted")
+//         .desc("Number of incorrect value predictions")
+//         ;
 	
-	numLoadPredicted
-        .name(name() + ".numLoadPredicted")
-        .desc("Number of Load value predictions")
-        ;
+// 	numLoadPredicted
+//         .name(name() + ".numLoadPredicted")
+//         .desc("Number of Load value predictions")
+//         ;
 
-	numLoadCorrectPredicted
-        .name(name() + ".numLoadCorrectPredicted")
-        .desc("Number of Correct Load value predictions")
-        ;
+// 	numLoadCorrectPredicted
+//         .name(name() + ".numLoadCorrectPredicted")
+//         .desc("Number of Correct Load value predictions")
+//         ;
 
-	valuePredAccuracy
-		.name(name() + ".valuePredAccuracy")
-        .desc("VP Accuracy")
-		.precision(6);
-        ;
+// 	valuePredAccuracy
+// 		.name(name() + ".valuePredAccuracy")
+//         .desc("VP Accuracy")
+// 		.precision(6);
+//         ;
 
-	valuePredAccuracy = numCorrectPredicted/numPredicted;
+// 	valuePredAccuracy = numCorrectPredicted/numPredicted;
 
-	valuePredCoverage
-		.name(name() + ".valuePredCoverage")
-        .desc("VP Coverage")
-		.precision(6);
-        ;
+// 	valuePredCoverage
+// 		.name(name() + ".valuePredCoverage")
+//         .desc("VP Coverage")
+// 		.precision(6);
+//         ;
 
-	valuePredCoverage = numCorrectPredicted/lookups; 
-}
+// 	valuePredCoverage = numCorrectPredicted/lookups; 
+// }
 
 
 bool
 VPredUnit::predict(const StaticInstPtr &inst, Addr inst_addr, RegVal &value)
 {
-	++lookups;
+	// ++lookups;
 
 	bool prediction= lookup(inst_addr, value);
 
-	if (prediction)
-	{
-		++numPredicted;
-		if (inst->isLoad())
-			++numLoadPredicted;
-	}
+	// if (prediction)
+	// {
+	// 	++numPredicted;
+	// 	if (inst->isLoad())
+	// 		++numLoadPredicted;
+	// }
 	return prediction;
 }
 
@@ -92,19 +91,19 @@ VPredUnit::update(const StaticInstPtr &inst, Addr inst_addr, bool isValuePredict
 {
 	updateTable(inst_addr, isValuePredicted, isValueTaken, trueValue);
 
-	if (isValuePredicted)
-	{
-		if (isValueTaken)
-		{
-			++numCorrectPredicted;
-			if (inst->isLoad())
-				++numLoadCorrectPredicted;
-		}
-		else
-		{
-			++numIncorrectPredicted;
-		}
-	}
+	// if (isValuePredicted)
+	// {
+	// 	if (isValueTaken)
+	// 	{
+	// 		++numCorrectPredicted;
+	// 		if (inst->isLoad())
+	// 			++numLoadCorrectPredicted;
+	// 	}
+	// 	else
+	// 	{
+	// 		++numIncorrectPredicted;
+	// 	}
+	// }
 }
 
 } // namespace gem5

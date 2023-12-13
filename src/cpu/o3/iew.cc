@@ -59,7 +59,7 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params, LVPUnit *lvpunit)
     exeStatus = Running;
     wbStatus = Idle;
 
-    valuePred  = params->valuePred;
+    valuePred  = params.valuePred;
 
     // Setup wire to read instructions coming from issue.
     fromIssue = issueToExecQueue.getWire(-issueToExecuteDelay);
@@ -937,6 +937,9 @@ void IEW::dispatchInsts(ThreadID tid)
         if(ENABLE_LVP && inst->isLoad())
         {
             bool predict_value = false;
+            RegVal value;
+
+	        Addr inst_addr = (inst->pcState()).instAddr();
 
             if (inst->numDestRegs() == 1 && inst->isInteger())
             {

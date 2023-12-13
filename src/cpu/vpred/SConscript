@@ -3,7 +3,6 @@ Import('*')
 if env['TARGET_ISA'] == 'null':
     Return()
 
-SimObject('ValuePredictor.py', sim_objects=[LVP])
-
-Source('vpred_unit.cc')
+SimObject('ValuePredictor.py', sim_objects=['LVP', 'ValuePredictor'])
 Source('lvp.cc')
+Source('vpred_unit.cc')

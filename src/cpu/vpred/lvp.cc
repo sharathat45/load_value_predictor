@@ -9,11 +9,11 @@
 namespace gem5
 {
 
-LVP::LVP(const LVPParams *params)
+LVP::LVP(const LVPParams &params)
     : VPredUnit(params),
-      lastPredictorSize(params->lastPredictorSize),
-      lastCtrBits(params->lastCtrBits),
-      classificationTable(lastPredictorSize, SatCounter(lastCtrBits)),
+      lastPredictorSize(params.lastPredictorSize),
+      lastCtrBits(params.lastCtrBits),
+      classificationTable(lastPredictorSize, SatCounter8(lastCtrBits)),
       valuePredictionTable(lastPredictorSize),
       tagTable(lastPredictorSize)
 {
@@ -99,10 +99,9 @@ LVP::updateTable(Addr inst_addr, bool isValuePredicted, bool isValueTaken, RegVa
     
 }
 
- LVP*
- LVPParams::create()
- {
-    return new LVP(this);
- }
+//  LVP*  LVPParams::create()
+//  {
+//     return new LVP(this);
+//  }
 
 } // namespace gem5

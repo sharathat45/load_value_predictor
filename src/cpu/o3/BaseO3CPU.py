@@ -171,6 +171,8 @@ class BaseO3CPU(BaseCPU):
                                                        Parent.numThreads),
                                        "Branch Predictor")
     needsTSO = Param.Bool(False, "Enable TSO Memory model")
+    
+    valuePred = Param.ValuePredictor(LVP(), "Value Predictor")
 
     
     LCTEntries = Param.Unsigned(1024, "Number  of LCT entries")
@@ -182,4 +184,4 @@ class BaseO3CPU(BaseCPU):
     CVUnumEntries = Param.Unsigned(1024, "Number of CVU entries")
     enableLVP = Param.Bool(False, "Enable load value prediction")
 
-    valuePred = Param.ValuePredictor(LVP(), "Value Predictor")
+    

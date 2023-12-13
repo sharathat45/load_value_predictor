@@ -19,9 +19,9 @@ class VPredUnit : public SimObject
     public:
         typedef ValuePredictorParams Params;
 
-        VPredUnit(const Params *p);
+        VPredUnit(const Params &p);
 
-        void regStats() override;
+        // void regStats() override;
 
         /*
         * Predicts whether to do VP and returns the predicted value by reference. 
@@ -38,28 +38,28 @@ class VPredUnit : public SimObject
         
         virtual void updateTable(Addr inst_addr, bool isValuePredicted, bool isValueTaken, RegVal &trueValue) = 0;
 
-    private:
-        /*Number of Possible Value Predictions*/
-        Stats::Scalar lookups;
+    // private:
+        // /*Number of Possible Value Predictions*/
+        // Stats::Scalar lookups;
 
-        /*Number of Values Predicted.*/
-        Stats::Scalar numPredicted;
+        // /*Number of Values Predicted.*/
+        // Stats::Scalar numPredicted;
 
-        /*Number of Correct Predictions.*/
-        Stats::Scalar numCorrectPredicted;
+        // /*Number of Correct Predictions.*/
+        // Stats::Scalar numCorrectPredicted;
 
-        /*Number of Incorrect Predictions.*/
-        Stats::Scalar numIncorrectPredicted;
+        // /*Number of Incorrect Predictions.*/
+        // Stats::Scalar numIncorrectPredicted;
 
-        /*Number of Load Values Predicted.*/
-        Stats::Scalar numLoadPredicted;
+        // /*Number of Load Values Predicted.*/
+        // Stats::Scalar numLoadPredicted;
 
-        /*Number of Load Values Correctly Predicted.*/
-        Stats::Scalar numLoadCorrectPredicted;
+        // /*Number of Load Values Correctly Predicted.*/
+        // Stats::Scalar numLoadCorrectPredicted;
 
-        Stats::Formula valuePredAccuracy;
+        // Stats::Formula valuePredAccuracy;
 
-        Stats::Formula valuePredCoverage;
+        // Stats::Formula valuePredCoverage;
 };
 } // namespace gem5
 #endif // __CPU_PRED_VPRED_UNIT_HH__
