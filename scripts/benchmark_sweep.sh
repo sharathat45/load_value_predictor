@@ -5,6 +5,7 @@ BENCHMARKS=("sjeng" "leslie3d" "lbm" "astar" "milc" "namd")
 PREDICTION_DEGRADES=(0)
 
 # Create an empty output file
+mkdir -p "analysis/execresults"
 echo -n > "analysis/execresults/out.txt"
 
 # Loop over the benchmarks and prediction degrade values
