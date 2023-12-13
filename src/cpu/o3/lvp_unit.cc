@@ -57,7 +57,13 @@ bool LVPUnit::predict(const DynInstPtr &inst)
 
         inst -> setLdPredictible(false);
         inst -> setLdConstant(false);
-        inst -> PredictedLdValue(0);
+        if(lvpt.valid(pc.instAddr(), tid)) {
+            inst -> PredictedLdValue(lvpt.lookup(pc.instAddr(), tid));  
+            //inst -> PredictedLdValue(0);
+        }
+        else {
+            inst -> PredictedLdValue(-1);
+        }
         return false;
     }
     else
@@ -122,6 +128,9 @@ void LVPUnit::update(const DynInstPtr &inst)
         // {
         if ((pred_ld_value == mem_ld_value))
         {   
+            if(pred_ld_value == 0) {
+                ++stats.ldvalPredicted_0;
+            }
 
             DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x pred_ld_value:%llu mem_ld_value:%u \n",
             inst->threadNumber, inst->seqNum, pc.instAddr(), mem_ld_value, mem_ld_value);
@@ -143,6 +152,29 @@ void LVPUnit::update(const DynInstPtr &inst)
         }
          //}
     }
+}
+
+void LVPUnit::ldconst_check(const DynInstPtr &inst) {
+    uint64_t mem_ld_value = *(inst->memData);
+    uint64_t pred_ld_value = inst->PredictedLdValue();
+    const PCStateBase &pc = inst->pcState();
+
+    if (pred_ld_value != mem_ld_value) {
+        stats.ldvalIncorrect++;
+        stats.wrongldConst++;
+        
+        DPRINTF(LVPUnit, "ldconst_check wrong: [tid:%i] [sn:%llu] PC:0x%x, ld_addr:0x%x, pred_ld_value:%llu mem_ld_value:%llu\n",
+            inst->threadNumber, inst->seqNum, pc.instAddr(),inst->effAddr, pred_ld_value, mem_ld_value);
+    }
+
+    if (pred_ld_value == 0) {
+        stats.ldvalPredicted_0++;
+        stats.ldConst_as_zero++;
+    }
+    stats.totalldConst++;
+
+    return;
+
 }
 
 void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {
@@ -171,6 +203,17 @@ LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
     : statistics::Group(parent, "lvp"),
       ADD_STAT(ldvalPredicted, statistics::units::Count::get(),
                "Number of load values predicted"),
+      
+      ADD_STAT(ldvalPredicted_0, statistics::units::Count::get(),
+               "Number of load values predicted as zero"),
+      ADD_STAT(wrongldConst, statistics::units::Count::get(),
+               "Number of load values predicted as constld but turns out to be wrong"),
+      //totalldConst
+      ADD_STAT(totalldConst, statistics::units::Count::get(),
+               "Total Number of load values predicted as constld"),
+      ADD_STAT(ldConst_as_zero, statistics::units::Count::get(),
+               "Number of load values predicted as CONSTANT AND ZERO"),
+
       ADD_STAT(ldvalIncorrect, statistics::units::Count::get(),
                "Number of load values incorrect"),
       ADD_STAT(ldvalAccuracy, statistics::units::Ratio::get(),

@@ -76,9 +76,7 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
                 LRU_update(i);
                 return true;
             }
-
     }
-
     return false;
 }
 
@@ -94,6 +92,8 @@ bool CVU::invalidate(Addr instPC, Addr StdataAddr, ThreadID tid)
     int index;
     Addr ld_range;
 
+    DPRINTF(LVPUnit,"CVU: TRY Invalidating store addr:0x%x\n",StdataAddr);
+
     for (index = 0; index < numEntries; index++){
         // DPRINTF(LVPUnit,"cvu iteration\n");
         // printf("cvu iteration normal print %d\n", index);
@@ -107,6 +107,7 @@ bool CVU::invalidate(Addr instPC, Addr StdataAddr, ThreadID tid)
                 cvu_table[index].instr_idx = 0;
                 cvu_table[index].LRU = 0;
                 cvu_table[index].tid = 0;
+                DPRINTF(LVPUnit,"CVU: Invalidating store addr:0x%x, cvu_table[%d].daddr = 0x%x \n",StdataAddr,index,cvu_table[0].data_addr);
                 return true;
             }
         }

@@ -56,6 +56,8 @@ class LVPUnit : public SimObject
 
     bool cvu_valid(const DynInstPtr &inst);
 
+    void ldconst_check(const DynInstPtr &inst);
+
     /**
      * Squashes all outstanding updates until a given sequence number.
      * @param squashed_sn The sequence number to squash any younger updates up
@@ -86,6 +88,13 @@ class LVPUnit : public SimObject
 
         /** Stat for number of lds predicted. */
         statistics::Scalar ldvalPredicted;
+        
+        /** Stat for number of lds predicted as zero. */
+        statistics::Scalar ldvalPredicted_0;
+        statistics::Scalar wrongldConst;
+        statistics::Scalar totalldConst;
+        statistics::Scalar ldConst_as_zero;
+        
         /** Stat for number of lds predicted incorrectly. */
         statistics::Scalar ldvalIncorrect;
         /** Stat for fraction of predicted lds predicted correctly. */

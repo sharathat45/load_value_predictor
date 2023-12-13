@@ -1176,8 +1176,8 @@ void IEW::executeInsts()
                     // wait until commit will be late
                     lvp_unit->cvu_invalidate(inst);
 
-                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d addr:%u SW instruction\n",
-                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr);
+                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d store_addr:0x%x, store_size%u SW instruction\n",
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr, inst->effSize);
                 }
                 
 
@@ -1364,8 +1364,12 @@ void IEW::writebackInsts()
                     lvp_unit->update(inst);
                 }
 
-                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u, memdata:%llu ,data_Addr:%x isInLSQ:%d constantld:%d \n",
-                        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), *(inst->memData),inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
+                if (inst->readLdConstant() == true) {
+                    lvp_unit->ldconst_check(inst);
+                }
+
+                //DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u, memdata:%llu ,data_Addr:%x isInLSQ:%d constantld:%d \n",
+                //        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), *(inst->memData),inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
             }
 
             for (int i = 0; i < inst->numDestRegs(); i++) {
