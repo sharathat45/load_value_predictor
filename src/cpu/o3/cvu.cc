@@ -69,7 +69,7 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
             && LwdataAddr == cvu_table[i].data_addr
             && instr_idx == cvu_table[i].instr_idx
             && cvu_table[i].tid == tid){
-                DPRINTF(LVPUnit, "Valid Entry found in CVU[%d]",i);
+                // DPRINTF(LVPUnit, "Valid Entry found in CVU[%d]",i);
                 LRU_update(i);
                 return true;
             }
@@ -132,7 +132,7 @@ inline void CVU::replacement(unsigned instr_idx, Addr data_addr, uint64_t data, 
     cvu_table[LRU_idx].LRU = 0;
     LRU_update(LRU_idx);
 
-    DPRINTF(LVPUnit, "CVU LRU replacement table entry [%d]: %d -> %d \n", LRU_idx, old_data_addr, data_addr);
+    // DPRINTF(LVPUnit, "CVU LRU replacement table entry [%d]: %d -> %d \n", LRU_idx, old_data_addr, data_addr);
 
     return;
 }

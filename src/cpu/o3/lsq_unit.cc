@@ -1571,7 +1571,8 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
     DPRINTF(LSQUnit, "Doing memory access for inst [sn:%lli] PC %s\n",
             load_inst->seqNum, load_inst->pcState());
 
-    // If the load is still constant, then we can skip the memory access
+    
+    //If the load is still constant, then we can skip the memory access
     if (ENABLE_LVP == true && load_inst->isVector() == false && load_inst->readLdConstant() == true && lvp_unit->cvu_valid(load_inst))
     {
         // Allocate memory if this is the first time a load is issued.
@@ -1580,14 +1581,6 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
             load_inst->memData = new uint8_t[request->mainReq()->getSize()];
         }
         
-        DPRINTF(LVPUnit, "MEMDATA_SIZE: %d EFF_SIZE: %d \n", request->mainReq()->getSize(), load_inst->effSize);
-
-        // uint8_t temp_data = new uint8_t[request->mainReq()->getSize()];
-        // memcpy(load_inst->memData, &(inst->PredictedLdValue()), request->mainReq()->getSize());
-        // *load_inst->memData = inst->PredictedLdValue();
-
-        // *load_inst->memData = load_inst->PredictedLdValue();
-
         uint64_t temp_ldval = load_inst->PredictedLdValue();
         memcpy(load_inst->memData, &temp_ldval, load_inst->effSize);
 
@@ -1597,13 +1590,10 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
         PacketPtr data_pkt = new Packet(request->mainReq(), MemCmd::ReadReq);
         data_pkt->dataStatic(load_inst->memData);
         
-        // request->discard();
         if (request->isAnyOutstandingRequest()) {
             assert(request->_numOutstandingPackets > 0);
-            // There are memory requests packets in flight already.
-            // This may happen if the store was not complete the
-            // first time this load got executed. Signal the senderSate
-            // that response packets should be discarded.
+            // There are memory requests packets in flight already. This may happen if the store was not complete the
+            // first time this load got executed. Signal the senderSate That response packets should be discarded.
             request->discard();
         }
 
@@ -1644,7 +1634,6 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
             iewStage->blockMemInst(load_inst);
 
     }
-    
 
     return NoFault;
 }
