@@ -41,6 +41,7 @@ void CVU::reset()
 inline unsigned CVU::getIndex(Addr instPC, ThreadID tid)
 {
     // Need to shift PC over by the word offset.
+    //return (inst_addr >> instShiftAmt) & indexMask;
     return ((instPC >> instShiftAmt) & idxMask);
             //^ (tid << (tagShiftAmt - instShiftAmt - log2NumThreads)))
             
@@ -65,12 +66,13 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
 {
     unsigned instr_idx = getIndex(instPC, tid);
 
+    DPRINTF(LVPUnit, "CVU: Valid Look Up, ld_inst_pc:%x, inst_idx%u, data_addr:%x\n",instPC,instr_idx,LwdataAddr);
     for (unsigned i = 0;i < numEntries; ++i){
         if (cvu_table[i].valid
             && LwdataAddr == cvu_table[i].data_addr
             && instr_idx == cvu_table[i].instr_idx
             && cvu_table[i].tid == tid){
-                DPRINTF(LVPUnit, "Valid Entry found in CVU[%d]",i);
+                DPRINTF(LVPUnit, "Valid Entry found in CVU[%d], ld_inst_pc:%x, inst_idx%u, data_addr:%x\n",i,instPC,instr_idx,cvu_table[i].data_addr);
                 LRU_update(i);
                 return true;
             }
@@ -143,7 +145,7 @@ inline void CVU::replacement(unsigned instr_idx, Addr data_addr, unsigned eff_si
     return;
 }
 
-void CVU::update(Addr instPc, Addr data_addr, unsigned eff_size, uint8_t data, ThreadID tid)
+void CVU::update(Addr instPc, Addr data_addr, unsigned eff_size, uint64_t data, ThreadID tid)
 {
     unsigned instr_idx = getIndex(instPc, tid);
 
@@ -157,6 +159,8 @@ void CVU::update(Addr instPc, Addr data_addr, unsigned eff_size, uint8_t data, T
             cvu_table[i].tid = tid;
             cvu_table[i].valid = true;
             LRU_update(i);
+            DPRINTF(LVPUnit, "CVU: Updating [tid:%i] PC:0x%x, index:%u, ld_data_addr:0x%x, with size: %d, data: %llu\n",
+            tid, instPc,instr_idx , data_addr, eff_size,data);
             return;
         }
     }

@@ -679,7 +679,7 @@ Decode::decodeInsts(ThreadID tid)
         if (ENABLE_LVP && inst->isLoad())
         {
             lvp_unit->predict(inst);
-            DPRINTF(LVPUnit, "Fetch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d  predVal:%u\n",
+            DPRINTF(LVPUnit, "Decode: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d  predVal:%u\n",
                     inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue());
         }
         else

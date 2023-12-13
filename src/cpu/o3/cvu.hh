@@ -59,7 +59,7 @@ class CVU
      *  @param data The value the load instruction should load
      *  @param tid The thread id.
      */
-    void update(Addr instPc, Addr data_addr, unsigned eff_size, uint8_t data, ThreadID tid);
+    void update(Addr instPc, Addr data_addr, unsigned eff_size, uint64_t data, ThreadID tid);
 
     // invalidate the corresponding entry, call upon a store instruction
     // return true if a matching entry was found

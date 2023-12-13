@@ -1582,6 +1582,7 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
         
         DPRINTF(LVPUnit, "MEMDATA_SIZE: %d EFF_SIZE: %d \n", request->mainReq()->getSize(), load_inst->effSize);
 
+
         // uint8_t temp_data = new uint8_t[request->mainReq()->getSize()];
         // memcpy(load_inst->memData, &(inst->PredictedLdValue()), request->mainReq()->getSize());
         // *load_inst->memData = inst->PredictedLdValue();
@@ -1591,7 +1592,7 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
         uint64_t temp_ldval = load_inst->PredictedLdValue();
         memcpy(load_inst->memData, &temp_ldval, load_inst->effSize);
 
-        DPRINTF(LVPUnit, "LSQ: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u actualVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
+        DPRINTF(LVPUnit, "LSQ: Skip Mem [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u actualVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
                 load_inst->threadNumber, load_inst->seqNum, (load_inst->pcState()).instAddr(), load_inst->memOpDone(), load_inst->PredictedLdValue(), *load_inst->memData, load_inst->effAddr, load_inst->isInLSQ(), load_inst->readLdConstant());
 
         PacketPtr data_pkt = new Packet(request->mainReq(), MemCmd::ReadReq);
@@ -1622,6 +1623,9 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
             load_inst->memData = new uint8_t[request->mainReq()->getSize()];
         }
 
+        load_inst -> setLdConstant(false);
+        DPRINTF(LVPUnit, "LSQ: No Skip [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
+                load_inst->threadNumber, load_inst->seqNum, (load_inst->pcState()).instAddr(), load_inst->memOpDone(), load_inst->PredictedLdValue(),load_inst->effAddr, load_inst->isInLSQ(), load_inst->readLdConstant());
 
         // hardware transactional memory
         if (request->mainReq()->isHTMCmd()) {

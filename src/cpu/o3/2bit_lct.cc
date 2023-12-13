@@ -39,9 +39,9 @@ uint8_t LCT::lookup(ThreadID tid, Addr inst_addr)
 {
     unsigned lct_idx = getLocalIndex(inst_addr);
 
-    DPRINTF(LVPUnit, "LCT: Looking up 0x%x (idx %u) for tid %u\n", inst_addr, lct_idx, tid);
-
     uint8_t counter_val = lctCtrs[lct_idx];
+
+    DPRINTF(LVPUnit, "LCT: Looking up 0x%x (idx %u) for tid %u, lct = %u\n", inst_addr, lct_idx, tid, counter_val);
 
     return counter_val;
 }
@@ -54,7 +54,7 @@ bool LCT::getPrediction(uint8_t &count)
 
 void LCT::update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squashed)
 {
-    unsigned lct_idx;
+    unsigned lct_idx,lct_update;
 
     // No state to restore, and we do not update on the wrong path.
     if (squashed) {
@@ -64,17 +64,19 @@ void LCT::update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squ
     // Update the local predictor.
     lct_idx = getLocalIndex(inst_addr);
 
-    DPRINTF(LVPUnit, "LCT: Updating 0x%x (idx %u) for tid %u with pred outcome:%d\n", inst_addr, lct_idx, tid, prediction_outcome);
+    DPRINTF(LVPUnit, "LCT: Updating 0x%x (idx %u) for tid %u with pred outcome(T/F):%d\n", inst_addr, lct_idx, tid, prediction_outcome);
 
     if (prediction_outcome)
     {
         lctCtrs[lct_idx]++;
-        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated ++\n", inst_addr);
+        lct_update = lctCtrs[lct_idx];
+        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated ++, index:lct_idx after update: %u\n", inst_addr, lct_update);
     }
     else
     {
         lctCtrs[lct_idx]--;
-        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated --\n", inst_addr);
+        // DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated --\n", inst_addr);
+        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated ++, index:lct_idx after update: %u\n", inst_addr, lct_update);
     }
 }
 

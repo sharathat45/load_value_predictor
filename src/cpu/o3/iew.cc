@@ -1364,8 +1364,8 @@ void IEW::writebackInsts()
                     lvp_unit->update(inst);
                 }
 
-                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u data_Addr:%llu isInLSQ:%d constantld:%d \n",
-                        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
+                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u, memdata:%llu ,data_Addr:%x isInLSQ:%d constantld:%d \n",
+                        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), *(inst->memData),inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
             }
 
             for (int i = 0; i < inst->numDestRegs(); i++) {
