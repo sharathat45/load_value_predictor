@@ -77,6 +77,26 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
                 return true;
             }
     }
+
+    // this function should only be called if the instruction is predicted
+    // as constant. Important!!
+    // if CVU validation fail, need to invalidate the entry
+    // might be more clean if just call the invalidate function
+    for (unsigned index = 0;index<numEntries;++index){
+        if(cvu_table[index].valid
+            && instr_idx == cvu_table[index].instr_idx
+            && cvu_table[index].tid == tid) {
+                //DPRINTF(LVPUnit,"CVU: Invalidating failed ldconstant valid check load, ld_instr_idx:%u, cvu_table[%d].ld_daddr = 0x%x \n",instr_idx,i,cvu_table[index].data_addr);
+                
+                cvu_table[index].valid = false;
+                cvu_table[index].data_addr = 0;
+                cvu_table[index].eff_size = 0;
+                cvu_table[index].instr_idx = 0;
+                cvu_table[index].LRU = 0;
+                cvu_table[index].tid = 0;
+            }
+    }
+
     return false;
 }
 

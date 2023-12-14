@@ -136,6 +136,7 @@ void LVPUnit::update(const DynInstPtr &inst)
             inst->threadNumber, inst->seqNum, pc.instAddr(), mem_ld_value, mem_ld_value);
             // make the counter to predictible
             lct.update(tid, pc.instAddr(), true, false);
+            //lvpt.update(pc.instAddr(), mem_ld_value, tid);
 
             if (lct.lookup(tid, pc.instAddr()) == 3)
             {

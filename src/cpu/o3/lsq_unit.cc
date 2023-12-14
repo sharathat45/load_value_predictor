@@ -1373,8 +1373,19 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
         return NoFault;
     }
 
-    if(load_inst->readLdConstant() == true && lvp_unit->cvu_valid(load_inst) == false) {
-        load_inst -> setLdConstant(false);
+    bool cvu_valid_check;
+
+    if(load_inst->readLdConstant() == true) {
+        
+        cvu_valid_check=lvp_unit->cvu_valid(load_inst);
+        
+        // if predicted as load constant,
+        // but due to lct/lvpt's many to one mapping, 
+        // the prediction might not actually belong to this instruction(they just have same instr_idx)
+        // cvu will capture this
+        if(cvu_valid_check == false) {
+            load_inst -> setLdConstant(false);
+        }
     }
 
     // Make sure this isn't a strictly ordered load

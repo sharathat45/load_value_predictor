@@ -76,7 +76,7 @@ void LCT::update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squ
     {
         lctCtrs[lct_idx]--;
         // DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated --\n", inst_addr);
-        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated ++, index:lct_idx after update: %u\n", inst_addr, lct_update);
+        DPRINTF(LVPUnit, "LCT: PC = 0x%x ld ins address updated --, index:lct_idx after update: %u\n", inst_addr, lct_update);
     }
 }
 
