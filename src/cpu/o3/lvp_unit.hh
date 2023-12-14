@@ -102,6 +102,8 @@ class LVPUnit : public SimObject
         statistics::Scalar constInval;
         /** Stat for number of constant loads that required rollback. */
         statistics::Scalar constRollback;
+        /** Stat for fraction of constant predictions that required rollback.. */
+        statistics::Formula constRollbackRate;
     } stats;
 
   protected:

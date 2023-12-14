@@ -201,7 +201,10 @@ LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
       ADD_STAT(constInval, statistics::units::Count::get(),
                "Total number of constant entries invalidated"),
       ADD_STAT(constRollback, statistics::units::Count::get(),
-               "Total number of constant loads requiring rollback")
+               "Total number of constant loads requiring rollback"),
+      ADD_STAT(constRollbackRate, statistics::units::Ratio::get(),
+               "Fraction of predicted loads that were correctly predicted",
+               constRollback / constPred)
 { }
 
 } // namespace o3
