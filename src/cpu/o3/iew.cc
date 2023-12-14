@@ -946,19 +946,26 @@ void IEW::dispatchInsts(ThreadID tid)
                 predict_value = valuePred->predict(inst->staticInst, inst_addr, value);
             }
 
+            inst->setValuePredicted(predict_value, value);
 
             // Predictor makes a succesful prediction.
             if (predict_value)
             {
-                uint64_t predicted_value = inst->PredictedLdValue();
+                DPRINTF(LVPUnit, "Waking dependents of PC:0x%x\n", inst->pcState().instAddr());
+
+                uint64_t predicted_value = inst->getValuePredicted();
 
                 //const RegId& reg = inst->destRegIdx(0);
                 PhysRegIdPtr reg = inst->renamedDestIdx(0);
+                DPRINTF(LVPUnit, "reg:0x%x\n", reg);
                 inst->cpu->setReg(reg, predicted_value);
+                DPRINTF(LVPUnit, "Set reg in CPU\n");
                 instQueue.wakeDependents(inst);
+                DPRINTF(LVPUnit, "Awoke dependents\n");
                 scoreboard->setReg(inst->renamedDestIdx(0));
+                DPRINTF(LVPUnit, "Updated scoreboard\n");
+
             }
-            inst->setValuePredicted(predict_value, value);
         }
 
         // Otherwise issue the instruction just fine.
@@ -1277,51 +1284,16 @@ void IEW::executeInsts()
         // This probably needs to prioritize the redirects if a different
         // scheduler is used.  Currently the scheduler schedules the oldest
         // instruction first, so the branch resolution order will be correct.
+
+        // Prevent testing for misprediction on load instructions,
+        // that have not been executed.
         ThreadID tid = inst->threadNumber;
+
+        bool loadNotExecuted = !inst->isExecuted() && inst->isLoad();
 
         if (!fetchRedirect[tid] ||
             !toCommit->squash[tid] ||
             toCommit->squashedSeqNum[tid] > inst->seqNum) {
-
-            // Prevent testing for misprediction on load instructions,
-            // that have not been executed.
-            bool loadNotExecuted = !inst->isExecuted() && inst->isLoad();
-
-            if (ENABLE_LVP) 
-            {
-                if (inst->isExecuted() && inst->numDestRegs() == 1 && inst->isInteger() && inst->isLoad())
-                {
-                    PhysRegIdPtr reg = inst->renamedDestIdx(0);
-                    RegVal trueValue = uint64_t(inst->cpu->getReg(reg));
-                    
-                    const PCStateBase &pc = inst->pcState();
-                    Addr inst_addr = pc.instAddr();
-
-                    DPRINTF(LVPUnit, "isValuePredicted:%d\n", inst->isValuePredicted());
-
-                    bool valueTaken = false;     
-                    if (inst->isValuePredicted())
-                    {
-                        RegVal predictedValue = inst->getValuePredicted();
-                
-                        valueTaken = trueValue == predictedValue;
-
-                        DPRINTF(LVPUnit, "update_vpred: PC:0x%x predValue:0x%x trueValue:0x%x\n", inst_addr, predictedValue, trueValue);
-
-                        valuePred->update(inst->staticInst, inst_addr, inst->isValuePredicted(), valueTaken, trueValue);
-
-                        if (valueTaken==false)
-                        {
-                            squashDueToLVP(inst, tid);    
-                        }
-                    }
-                    else
-                    {
-                        valuePred->update(inst->staticInst, inst_addr, inst->isValuePredicted(), valueTaken, trueValue);
-                    }
-
-                }
-            }
 
             if (inst->mispredicted() && !loadNotExecuted) {
                 fetchRedirect[tid] = true;
@@ -1416,6 +1388,52 @@ void IEW::writebackInsts()
     for (int inst_num = 0; inst_num < wbWidth && toCommit->insts[inst_num]; inst_num++) {
         DynInstPtr inst = toCommit->insts[inst_num];
         ThreadID tid = inst->threadNumber;
+
+        if (ENABLE_LVP) 
+        {
+            DPRINTF(LVPUnit, "PC:0x%x isExec:%d nDestRegs:%d isInt:%d isLd:%d\n",
+                    inst->pcState().instAddr(), inst->isExecuted(), inst->numDestRegs() == 1, inst->isInteger(), inst->isLoad());
+            if (!inst->isSquashed() && inst->isExecuted() && inst->getFault() == NoFault && inst->numDestRegs() == 1 && inst->isInteger() && inst->isLoad())
+            {
+                PhysRegIdPtr reg = inst->renamedDestIdx(0);
+                RegVal trueValue = uint64_t(inst->cpu->getReg(reg));
+                
+                const PCStateBase &pc = inst->pcState();
+                Addr inst_addr = pc.instAddr();
+
+                DPRINTF(LVPUnit, "isValuePredicted:%d\n", inst->isValuePredicted());
+
+                bool valueTaken = false;     
+                if (inst->isValuePredicted())
+                {
+                    RegVal predictedValue = inst->getValuePredicted();
+            
+                    valueTaken = trueValue == predictedValue;
+
+                    DPRINTF(LVPUnit, "update_vpred: PC:0x%x predValue:0x%x trueValue:0x%x ACTUAL PREDICTION\n", inst_addr, predictedValue, trueValue);
+                    valuePred->update(inst->staticInst, inst_addr, inst->isValuePredicted(), valueTaken, trueValue);
+
+                    if (valueTaken==false)
+                    {
+                        DPRINTF(LVPUnit, "LVP SQUASH");
+                        squashDueToLVP(inst, tid);
+                        continue;  
+                    }
+                }
+                else
+                {
+                    DPRINTF(LVPUnit, "update_vpred: PC:0x%x trueValue:0x%x\n", inst_addr, trueValue);
+                    valuePred->update(inst->staticInst, inst_addr, inst->isValuePredicted(), valueTaken, trueValue);
+                }
+
+            }
+
+            // If this was a predicted instruction, remove that flag now that we've done the check
+            if (inst->isValuePredicted()) {
+                DPRINTF(LVPUnit, "Removing prediction from PC:0x%x\n", inst->pcState().instAddr());
+                inst->setValuePredicted(false, 0);
+            }
+        }
 
         DPRINTF(IEW, "Sending instructions to commit, [sn:%lli] PC %s.\n",
                 inst->seqNum, inst->pcState());

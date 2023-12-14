@@ -4,6 +4,7 @@
 // #include "base/logging.hh"
 // #include "base/trace.hh"
 // #include "debug/Fetch.hh"
+#include "debug/LVPUnit.hh"
 #include "iostream"
 
 namespace gem5
@@ -18,6 +19,8 @@ LVP::LVP(const LVPParams &params)
       tagTable(lastPredictorSize)
 {
     // valuePredictionTable.resize(lastPredictorSize);
+    DPRINTF(LVPUnit, "Initializing LVP with lastPredictorSize:%d lastCtrBits:%d\n",
+            params.lastPredictorSize, params.lastCtrBits);
 }
 
 bool

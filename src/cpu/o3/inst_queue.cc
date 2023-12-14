@@ -985,19 +985,24 @@ InstructionQueue::wakeDependents(const DynInstPtr &completed_inst)
     // instruction if it is a memory instruction.  Also complete the memory
     // instruction at this point since we know it executed without issues.
     ThreadID tid = completed_inst->threadNumber;
-    if (completed_inst->isMemRef()) {
-        memDepUnit[tid].completeInst(completed_inst);
 
-        DPRINTF(IQ, "Completing mem instruction PC: %s [sn:%llu]\n",
-            completed_inst->pcState(), completed_inst->seqNum);
+    // Only mark as completed if this is not a predicted instruction
+    if (!completed_inst->isValuePredicted())
+    {
+        if (completed_inst->isMemRef()) {
+            memDepUnit[tid].completeInst(completed_inst);
 
-        ++freeEntries;
-        completed_inst->memOpDone(true);
-        count[tid]--;
-    } else if (completed_inst->isReadBarrier() ||
-               completed_inst->isWriteBarrier()) {
-        // Completes a non mem ref barrier
-        memDepUnit[tid].completeInst(completed_inst);
+            DPRINTF(IQ, "Completing mem instruction PC: %s [sn:%llu]\n",
+                completed_inst->pcState(), completed_inst->seqNum);
+
+            ++freeEntries;
+            completed_inst->memOpDone(true);
+            count[tid]--;
+        } else if (completed_inst->isReadBarrier() ||
+                completed_inst->isWriteBarrier()) {
+            // Completes a non mem ref barrier
+            memDepUnit[tid].completeInst(completed_inst);
+        }
     }
 
     for (int dest_reg_idx = 0;
