@@ -37,6 +37,8 @@ LVPUnit::LVPUnit(CPU *_cpu, const BaseO3CPUParams &params)
 
 bool LVPUnit::predict(const DynInstPtr &inst)
 {
+    ++stats.lookups;
+
     ThreadID tid = inst->threadNumber;
     const PCStateBase &pc = inst->pcState();
 
@@ -45,16 +47,11 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     bool lvpt_valid = lvpt.valid(pc.instAddr(), tid);
     inst->PredictedLdValue(pred_ld_val);
 
-    stats.LVPTLookups++;
-
     // Lookup the prediction state for this instruction in the LCT and check if it's predictable
     uint8_t counter_val = lct.lookup(tid, pc.instAddr());
     bool is_predictable = lct.getPrediction(counter_val);
     inst->setLdPredictible(is_predictable && lvpt_valid);
     inst->setLdConstant(counter_val == 3 && lvpt_valid);
-
-    stats.LCTLookups += 1;
-    stats.LCTPredictable += is_predictable;
 
     // Debug stuff
     if (is_predictable == false) 
@@ -65,16 +62,19 @@ bool LVPUnit::predict(const DynInstPtr &inst)
     }
     else
     {   
-        if (lvpt.valid(pc.instAddr(), tid))
+        if (lvpt_valid)
         {
-            ++stats.LVPTHits;
-            ++stats.ldvalPredicted;
+            ++stats.predTotal;
+
+            if (counter_val == 3) {
+                ++stats.constPred;
+            }
     
             DPRINTF(LVPUnit, "lvp_predict: [tid:%i] [sn:%llu] PC:0x%x LCT:%u LVPT:0x%x Predictable\n",
                     inst->threadNumber, inst->seqNum, pc.instAddr(), counter_val, pred_ld_val);
             return true;
         }
-        else       
+        else
         {
             DPRINTF(LVPUnit, "lvp_predict: [tid:%i] [sn:%llu] PC:0x%x LCT:%u LCT valid but LVPT invalid\n",
                     inst->threadNumber, inst->seqNum, pc.instAddr(), counter_val);
@@ -112,39 +112,40 @@ void LVPUnit::update(const DynInstPtr &inst)
             DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:0x%x pred_ld_value:0x%x  mem_ld_value=0x%x LVPT ENTRY != PREDICTED VALUE\n",
                     inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
         }
+
+        if (pred_ld_value == mem_ld_value)
+        {
+            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:0x%x pred_ld_value:0x%x  mem_ld_value=0x%x MEM VALUE == PREDICTED VALUE\n",
+                    inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
+
+            // Increment the LCT's saturating counter
+            lct.update(tid, pc.instAddr(), true, false);
+
+            // If the entry for this instruction in the LCT became constant, update the CVU to reflect this
+            if (lct.lookup(tid, pc.instAddr()) == 3)
+            {
+                cvu.update(pc.instAddr(), inst->effAddr, mem_ld_value, tid);
+            }
+
+            stats.predCorrect += inst->readLdPredictible();
+        }
         else
         {
-            if (pred_ld_value == mem_ld_value)
+            DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:0x%x pred_ld_value:0x%x  mem_ld_value=0x%x MEM VALUE != PREDICTED VALUE\n",
+                    inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
+
+            // Decrement the LCT's saturating counter
+            lct.update(tid, pc.instAddr(), false, false);
+
+            // If the entry for this instruction in the LCT became 0, update the prediction in the LVPT
+            if (lct.lookup(tid, pc.instAddr()) == 0)
             {
-                DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:0x%x pred_ld_value:0x%x  mem_ld_value=0x%x MEM VALUE == PREDICTED VALUE\n",
-                        inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
-
-                // Increment the LCT's saturating counter
-                lct.update(tid, pc.instAddr(), true, false);
-
-                // If the entry for this instruction in the LCT became constant, update the CVU to reflect this
-                if (lct.lookup(tid, pc.instAddr()) == 3)
-                {
-                    cvu.update(pc.instAddr(), inst->effAddr, mem_ld_value, tid);
-                }
+                lvpt.update(pc.instAddr(), mem_ld_value, tid);
             }
-            else
-            {
-                DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x lvpt_ld_value:0x%x pred_ld_value:0x%x  mem_ld_value=0x%x MEM VALUE != PREDICTED VALUE\n",
-                        inst->threadNumber, inst->seqNum, pc.instAddr(), lvpt_ld_value, pred_ld_value, mem_ld_value);
 
-                // Decrement the LCT's saturating counter
-                lct.update(tid, pc.instAddr(), false, false);
-
-                // If the entry for this instruction in the LCT became 0, update the prediction in the LVPT
-                if (lct.lookup(tid, pc.instAddr()) == 0)
-                {
-                    lvpt.update(pc.instAddr(), mem_ld_value, tid);
-                }
-
-                stats.ldvalIncorrect++;
-            }
-         }
+            stats.predIncorrect += inst->readLdPredictible();
+            stats.constRollback += inst->readLdConstant();
+        }
     }
 }
 
@@ -160,6 +161,8 @@ void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {
     if (cvu.invalidate(instPC,StdataAddr,tid)) {
         // For now if we had a CVU invalidation, downgrade the LCT prediction counter
         lct.update(tid, pc.instAddr(), false, false);
+
+        ++stats.constInval;
     }
 
     return;
@@ -177,25 +180,29 @@ bool LVPUnit::cvu_valid(const DynInstPtr &inst) {
 
 LVPUnit::LVPUnitStats::LVPUnitStats(statistics::Group *parent)
     : statistics::Group(parent, "lvp"),
-      ADD_STAT(ldvalPredicted, statistics::units::Count::get(),
-               "Number of load values predicted"),
-      ADD_STAT(ldvalIncorrect, statistics::units::Count::get(),
-               "Number of load values incorrect"),
-      ADD_STAT(ldvalAccuracy, statistics::units::Ratio::get(),
-               "Fraction of predicted load values that were correctly predicted",
-               (ldvalPredicted - ldvalIncorrect) / ldvalPredicted),
-      ADD_STAT(LCTLookups, statistics::units::Count::get(),
-               "Number of LCT lookups"),
-      ADD_STAT(LCTPredictable, statistics::units::Count::get(),
-               "Number of LCT lookups that were predictable"),
-      ADD_STAT(LVPTLookups, statistics::units::Count::get(),
-               "Number of LVPT lookups"),
-      ADD_STAT(LVPTHits, statistics::units::Count::get(), "Number of LVPT hits"),
-      ADD_STAT(LVPTHitRatio, statistics::units::Ratio::get(), "LVPT Hit Ratio",
-               LVPTHits / LVPTLookups)
-{
-    LVPTHitRatio.precision(6);
-}
+      // LVP overall stats
+      ADD_STAT(lookups, statistics::units::Count::get(),
+               "Total number of LVP lookups"),
+      ADD_STAT(predTotal, statistics::units::Count::get(),
+               "Total number of loads predicted"),
+      ADD_STAT(predCorrect, statistics::units::Count::get(),
+               "Total number of loads predicted correctly"),
+      ADD_STAT(predIncorrect, statistics::units::Count::get(),
+               "Total number of loads predicted incorrectly"),
+      ADD_STAT(predRate, statistics::units::Ratio::get(),
+               "Fraction of loads that resulted in a prediction",
+               predTotal / lookups),
+      ADD_STAT(predAccuracy, statistics::units::Ratio::get(),
+               "Fraction of predicted loads that were correctly predicted",
+               predCorrect / (predCorrect + predIncorrect)),
+      // Constant prediction stats
+      ADD_STAT(constPred, statistics::units::Count::get(),
+               "Total number of loads predicted constant"),
+      ADD_STAT(constInval, statistics::units::Count::get(),
+               "Total number of constant entries invalidated"),
+      ADD_STAT(constRollback, statistics::units::Count::get(),
+               "Total number of constant loads requiring rollback")
+{ }
 
 } // namespace o3
 } // namespace gem5
