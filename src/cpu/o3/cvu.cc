@@ -86,7 +86,7 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
         if(cvu_table[index].valid
             && instr_idx == cvu_table[index].instr_idx
             && cvu_table[index].tid == tid) {
-                //DPRINTF(LVPUnit,"CVU: Invalidating failed ldconstant valid check load, ld_instr_idx:%u, cvu_table[%d].ld_daddr = 0x%x \n",instr_idx,i,cvu_table[index].data_addr);
+                DPRINTF(LVPUnit,"CVU: Invalidating failed ldconstant valid check load, ld_instr_idx:%u, cvu_table[%d].ld_daddr = 0x%x \n",instr_idx,index,cvu_table[index].data_addr);
                 
                 cvu_table[index].valid = false;
                 cvu_table[index].data_addr = 0;
@@ -134,7 +134,7 @@ bool CVU::invalidate(Addr instPC, Addr StdataAddr, Addr St_effsize, ThreadID tid
                 cvu_table[index].LRU = 0;
                 cvu_table[index].tid = 0;
                 DPRINTF(LVPUnit,"CVU: Invalidating store addr:0x%x, cvu_table[%d].daddr = 0x%x \n",StdataAddr,index,cvu_table[index].data_addr);
-                return true;
+                //return true;
             }
         }
     }
@@ -186,8 +186,8 @@ void CVU::update(Addr instPc, Addr data_addr, unsigned eff_size, uint64_t data, 
             cvu_table[i].tid = tid;
             cvu_table[i].valid = true;
             LRU_update(i);
-            DPRINTF(LVPUnit, "CVU: Updating [tid:%i] PC:0x%x, index:%u, ld_data_addr:0x%x, with size: %d, data: %llu\n",
-            tid, instPc,instr_idx , data_addr, eff_size,data);
+            DPRINTF(LVPUnit, "CVU: Updating cvu_table[%u] [tid:%i] PC:0x%x, index:%u, ld_data_addr:0x%x, with size: %d, data: %llu\n",
+            i,tid, instPc,instr_idx , data_addr, eff_size,data);
             return;
         }
     }

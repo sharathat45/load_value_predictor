@@ -106,6 +106,7 @@ void LVPUnit::update(const DynInstPtr &inst)
             inst->threadNumber, inst->seqNum, pc.instAddr(), inst->effAddr, *(inst->memData));
 
     bool valid_entry = lvpt.valid(pc.instAddr(), tid);
+    unsigned lct_pre_update;
 
     if (!valid_entry)
     {
@@ -135,10 +136,11 @@ void LVPUnit::update(const DynInstPtr &inst)
             DPRINTF(LVPUnit, "lvp_update: [tid:%i] [sn:%llu] PC:0x%x pred_ld_value:%llu mem_ld_value:%u \n",
             inst->threadNumber, inst->seqNum, pc.instAddr(), mem_ld_value, mem_ld_value);
             // make the counter to predictible
+            lct_pre_update = lct.lookup(tid, pc.instAddr());
             lct.update(tid, pc.instAddr(), true, false);
             //lvpt.update(pc.instAddr(), mem_ld_value, tid);
 
-            if (lct.lookup(tid, pc.instAddr()) == 3)
+            if (lct_pre_update == 2 && lct.lookup(tid, pc.instAddr()) == 3)
             {
                 cvu.update(pc.instAddr(), inst->effAddr, inst->effSize, mem_ld_value, tid);
             }
