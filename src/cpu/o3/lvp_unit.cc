@@ -167,6 +167,10 @@ void LVPUnit::ldconst_check(const DynInstPtr &inst) {
         DPRINTF(LVPUnit, "ldconst_check wrong: [tid:%i] [sn:%llu] PC:0x%x, ld_addr:0x%x, pred_ld_value:%llu mem_ld_value:%llu\n",
             inst->threadNumber, inst->seqNum, pc.instAddr(),inst->effAddr, pred_ld_value, mem_ld_value);
     }
+    else {
+        DPRINTF(LVPUnit, "ldconst_check correct: [tid:%i] [sn:%llu] PC:0x%x, ld_addr:0x%x, pred_ld_value:%llu mem_ld_value:%llu\n",
+            inst->threadNumber, inst->seqNum, pc.instAddr(),inst->effAddr, pred_ld_value, mem_ld_value);
+    }
 
     if (pred_ld_value == 0) {
         stats.ldvalPredicted_0++;
@@ -182,10 +186,11 @@ void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {
     const PCStateBase &pc = inst->pcState();
     Addr instPC = pc.instAddr();
     Addr StdataAddr = inst->effAddr;
+    Addr St_effsize = inst->effSize;
     ThreadID tid = inst->threadNumber;
     
     //DPRINTF(LVPUnit,"LVPUnit::cvu_invalidate stdataAddr:%llu\n",StdataAddr);
-    cvu.invalidate(instPC,StdataAddr,tid);
+    cvu.invalidate(instPC,StdataAddr,St_effsize,tid);
 
     return;
 }

@@ -104,13 +104,14 @@ bool CVU::valid(Addr instPC, Addr LwdataAddr, ThreadID tid)
 // Return True if the corresponding entry appears in the table
 // and has been invalidated. Return False if no corresponding
 // entry was found.
-bool CVU::invalidate(Addr instPC, Addr StdataAddr, ThreadID tid)
+bool CVU::invalidate(Addr instPC, Addr StdataAddr, Addr St_effsize, ThreadID tid)
 {   
     // DPRINTF(LVPUnit,"CVU::Invalidation\n");
     // DPRINTF(LVPUnit,"CVU::cvu_table[%d].valid = %d, cvu_table[%d].daddr = %d \n", cvu_table[0].valid,cvu_table[0].data_addr);
     // DPRINTF(LVPUnit,"CVU::Invalidation after table call\n");
     int index;
-    Addr ld_range;
+    Addr ld_range, st_range;
+    bool ld_range_violation, st_range_violation;
 
     DPRINTF(LVPUnit,"CVU: TRY Invalidating store addr:0x%x\n",StdataAddr);
 
@@ -119,15 +120,20 @@ bool CVU::invalidate(Addr instPC, Addr StdataAddr, ThreadID tid)
         // printf("cvu iteration normal print %d\n", index);
         // fflush(stdout);
         if (cvu_table[index].valid) {
+            st_range = StdataAddr + St_effsize - 1;
             ld_range = cvu_table[index].data_addr + cvu_table[index].eff_size - 1;
-            if ((StdataAddr >= cvu_table[index].data_addr) && StdataAddr <= ld_range) {
+            
+            ld_range_violation = (StdataAddr >= cvu_table[index].data_addr) && StdataAddr <= ld_range;
+            st_range_violation = (cvu_table[index].data_addr >= StdataAddr) && cvu_table[index].data_addr <= st_range;
+
+            if (ld_range_violation || st_range_violation) {
                 cvu_table[index].valid = false;
                 cvu_table[index].data_addr = 0;
                 cvu_table[index].eff_size = 0;
                 cvu_table[index].instr_idx = 0;
                 cvu_table[index].LRU = 0;
                 cvu_table[index].tid = 0;
-                DPRINTF(LVPUnit,"CVU: Invalidating store addr:0x%x, cvu_table[%d].daddr = 0x%x \n",StdataAddr,index,cvu_table[0].data_addr);
+                DPRINTF(LVPUnit,"CVU: Invalidating store addr:0x%x, cvu_table[%d].daddr = 0x%x \n",StdataAddr,index,cvu_table[index].data_addr);
                 return true;
             }
         }

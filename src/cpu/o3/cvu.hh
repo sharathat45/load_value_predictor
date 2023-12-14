@@ -63,7 +63,7 @@ class CVU
 
     // invalidate the corresponding entry, call upon a store instruction
     // return true if a matching entry was found
-    bool invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid);
+    bool invalidate(Addr instPC, Addr LwdataAddr, Addr St_effsize, ThreadID tid);
 
     // replace the LRU entry, should be called if the table is full
     void replacement(unsigned instr_idx, Addr data_addr, unsigned eff_size, uint8_t data, ThreadID tid);
