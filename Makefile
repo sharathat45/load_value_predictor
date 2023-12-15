@@ -7,7 +7,7 @@ SRC_H = include
 ASSEMBLY_FLAG = -S
 CC = /usr/bin/g++ -O2 -std=gnu++11 -I $(SRC_H) -L util/m5/build/x86/out/
 
-MODEL = ./build/ECE565-ARM/gem5.opt 
+MODEL = ./build/ECE565-ARM/gem5.opt
 CONFIG = ./configs/example/se.py 
 CONFIG_FLAGS = --cpu-type=O3CPU --maxinsts=1000000 --l1d_size=64kB --l1i_size=16kB --caches --l2cache
 HELLO_EXECUTABLE = tests/test-progs/hello/bin/arm/linux/hello
@@ -45,7 +45,7 @@ hello:
 	$(MODEL) $(DEBUG_FLAGS) $(CONFIG) $(CONFIG_FLAGS) -c $(HELLO_EXECUTABLE)
 	@echo "$(CONFIG) $(CONFIG_FLAGS) -c $(HELLO_EXECUTABLE)" > last_command
 
-BENCHMARKS = sjeng lbm milc astar leslie3d namd
+BENCHMARKS = sjeng lbm milc astar leslie3d namd gcc
 $(BENCHMARKS):
 	BENCHMARK_BIN=$@; \
 	$(MODEL) $(DEBUG_FLAGS) $(BENCHMARK_CONFIG) $(CONFIG_FLAGS) -b $$BENCHMARK_BIN

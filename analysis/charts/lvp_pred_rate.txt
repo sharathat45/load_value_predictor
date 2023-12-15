@@ -1,10 +1,10 @@
-          lookups  predTotal LVP prediction rate
-sjeng      163922      82361              50.24%
-leslie3d    41454      26640              64.26%
-lbm          3028        844              27.87%
-astar      354130     252601              71.33%
-milc       275969     271591              98.41%
-namd       189663      90842              47.90%
+          Lookups  Predictions Prediction rate
+sjeng      163922        82367         50.25\%
+leslie3d    41454        26640         64.26\%
+lbm          3028          844         27.87\%
+astar      354130       252601         71.33\%
+milc       275969       271591         98.41\%
+namd       189663        90842         47.90\%
 
 ********************************************************************************
 
@@ -12,14 +12,14 @@ namd       189663      90842              47.90%
 \caption{LVP Prediction Rate}
 \begin{tabular}{lrrl}
 \toprule
- & lookups & predTotal & LVP prediction rate \\
+ & Lookups & Predictions & Prediction rate \\
 \midrule
-sjeng & 163922 & 82361 & 50.24% \\
-leslie3d & 41454 & 26640 & 64.26% \\
-lbm & 3028 & 844 & 27.87% \\
-astar & 354130 & 252601 & 71.33% \\
-milc & 275969 & 271591 & 98.41% \\
-namd & 189663 & 90842 & 47.90% \\
+sjeng & 163922 & 82367 & 50.25\% \\
+leslie3d & 41454 & 26640 & 64.26\% \\
+lbm & 3028 & 844 & 27.87\% \\
+astar & 354130 & 252601 & 71.33\% \\
+milc & 275969 & 271591 & 98.41\% \\
+namd & 189663 & 90842 & 47.90\% \\
 \bottomrule
 \end{tabular}
 \end{table}

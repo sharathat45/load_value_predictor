@@ -1,25 +1,25 @@
           Dynamic predictions  Constant predictions Constant fraction
-sjeng                   82361                 66151            80.32%
-leslie3d                26640                 23472            88.11%
-lbm                       844                   537            63.63%
-astar                  252601                246955            97.76%
-milc                   271591                270899            99.75%
-namd                    90842                 82204            90.49%
+sjeng                   82367                 66154           80.32\%
+leslie3d                26640                 23472           88.11\%
+lbm                       844                   537           63.63\%
+astar                  252601                246955           97.76\%
+milc                   271591                270899           99.75\%
+namd                    90842                 82204           90.49\%
 
 ********************************************************************************
 
 \begin{table}
-\caption{LVP Prediction Accuracy}
+\caption{LVP Constant Predictions}
 \begin{tabular}{lrrl}
 \toprule
  & Dynamic predictions & Constant predictions & Constant fraction \\
 \midrule
-sjeng & 82361 & 66151 & 80.32% \\
-leslie3d & 26640 & 23472 & 88.11% \\
-lbm & 844 & 537 & 63.63% \\
-astar & 252601 & 246955 & 97.76% \\
-milc & 271591 & 270899 & 99.75% \\
-namd & 90842 & 82204 & 90.49% \\
+sjeng & 82367 & 66154 & 80.32\% \\
+leslie3d & 26640 & 23472 & 88.11\% \\
+lbm & 844 & 537 & 63.63\% \\
+astar & 252601 & 246955 & 97.76\% \\
+milc & 271591 & 270899 & 99.75\% \\
+namd & 90842 & 82204 & 90.49\% \\
 \bottomrule
 \end{tabular}
 \end{table}

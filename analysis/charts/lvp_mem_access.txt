@@ -1,0 +1,25 @@
+          Loads from L1$ without LVP  Loads from L1$ with LVP L1$ loads prevented
+sjeng                         163922                    97768             40.36\%
+leslie3d                       41454                    17982             56.62\%
+lbm                             3028                     2491             17.73\%
+astar                         354130                   107175             69.74\%
+milc                          275969                     5070             98.16\%
+namd                          189663                   107459             43.34\%
+
+********************************************************************************
+
+\begin{table}
+\caption{LVP Constant Predictions}
+\begin{tabular}{lrrl}
+\toprule
+ & Loads from L1$ without LVP & Loads from L1$ with LVP & L1$ loads prevented \\
+\midrule
+sjeng & 163922 & 97768 & 40.36\% \\
+leslie3d & 41454 & 17982 & 56.62\% \\
+lbm & 3028 & 2491 & 17.73\% \\
+astar & 354130 & 107175 & 69.74\% \\
+milc & 275969 & 5070 & 98.16\% \\
+namd & 189663 & 107459 & 43.34\% \\
+\bottomrule
+\end{tabular}
+\end{table}
