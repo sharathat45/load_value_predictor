@@ -1,0 +1,25 @@
+          Dynamic predictions  Committed predictions  Correct predictions  Incorrect predictions Prediction accuracy
+sjeng                   82361                  81300                60237                  21063              74.09%
+leslie3d                26640                  24406                22201                   2205              90.97%
+lbm                       844                    574                  452                    122              78.75%
+astar                  252601                 242991               238367                   4624              98.10%
+milc                   271591                 237563               237218                    345              99.85%
+namd                    90842                  87366                80784                   6582              92.47%
+
+********************************************************************************
+
+\begin{table}
+\caption{LVP Prediction Accuracy}
+\begin{tabular}{lrrrrl}
+\toprule
+ & Dynamic predictions & Committed predictions & Correct predictions & Incorrect predictions & Prediction accuracy \\
+\midrule
+sjeng & 82361 & 81300 & 60237 & 21063 & 74.09% \\
+leslie3d & 26640 & 24406 & 22201 & 2205 & 90.97% \\
+lbm & 844 & 574 & 452 & 122 & 78.75% \\
+astar & 252601 & 242991 & 238367 & 4624 & 98.10% \\
+milc & 271591 & 237563 & 237218 & 345 & 99.85% \\
+namd & 90842 & 87366 & 80784 & 6582 & 92.47% \\
+\bottomrule
+\end{tabular}
+\end{table}
