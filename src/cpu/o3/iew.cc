@@ -1363,7 +1363,7 @@ void IEW::writebackInsts()
             // If we're writing back a load instruction, check if it was predicted correctly
             if (ENABLE_LVP == true && inst->isLoad())
             {
-                if (inst->memOpDone() && inst->memData != nullptr)
+                if (inst->memOpDone() && inst->memData != nullptr && !inst->readLdConstant())
                 {
                     // Update the LVP unit with the status of this prediction if the memory access is done
                     lvp_unit->update(inst);

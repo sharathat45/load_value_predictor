@@ -1331,6 +1331,21 @@ LSQUnit::read(LSQRequest *request, ssize_t load_idx)
     // only if they're at the head of the LSQ and are ready to commit
     // (at the head of the ROB too).
 
+    bool cvu_valid_check;
+
+    if(load_inst->readLdConstant() == true) {
+        
+        cvu_valid_check=lvp_unit->cvu_valid(load_inst);
+        
+        // if predicted as load constant,
+        // but due to lct/lvpt's many to one mapping, 
+        // the prediction might not actually belong to this instruction(they just have same instr_idx)
+        // cvu will capture this
+        if(cvu_valid_check == false) {
+            load_inst -> setLdConstant(false);
+        }
+    }
+
     if (request->mainReq()->isStrictlyOrdered() &&
         (load_idx != loadQueue.head() || !load_inst->isAtCommit())) {
         // Tell IQ/mem dep unit that this instruction will need to be

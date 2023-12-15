@@ -124,7 +124,7 @@ void LVPUnit::update(const DynInstPtr &inst)
             // If the entry for this instruction in the LCT became constant, update the CVU to reflect this
             if (lct.lookup(tid, pc.instAddr()) == 3)
             {
-                cvu.update(pc.instAddr(), inst->effAddr, mem_ld_value, tid);
+                cvu.update(pc.instAddr(), inst->effAddr, inst->effSize, mem_ld_value, tid);
             }
 
             stats.predCorrect += inst->readLdPredictible();
@@ -153,12 +153,13 @@ void LVPUnit::cvu_invalidate(const DynInstPtr &inst) {
     const PCStateBase &pc = inst->pcState();
     Addr instPC = pc.instAddr();
     Addr StdataAddr = inst->effAddr;
+    Addr St_effsize = inst->effSize;
     ThreadID tid = inst->threadNumber;
     
     DPRINTF(LVPUnit, "cvu_invalidate: [tid:%i] [sn:%llu] PC:0x%x data_addr:0x%x\n",
             inst->threadNumber, inst->seqNum, pc.instAddr(), inst->effAddr);
 
-    if (cvu.invalidate(instPC,StdataAddr,tid)) {
+    if (cvu.invalidate(instPC,StdataAddr,St_effsize,tid)) {
         // For now if we had a CVU invalidation, downgrade the LCT prediction counter
         lct.update(tid, pc.instAddr(), false, false);
 

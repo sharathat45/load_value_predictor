@@ -20,6 +20,7 @@ class CVU
         /** The entry's tag. */
         unsigned instr_idx;
         Addr data_addr;
+        unsigned eff_size;
         
         /** The entry's thread id. */
         ThreadID tid;
@@ -58,14 +59,14 @@ class CVU
      *  @param data The value the load instruction should load
      *  @param tid The thread id.
      */
-    void update(Addr instPc, Addr data_addr, uint64_t data, ThreadID tid);
+    void update(Addr instPc, Addr data_addr, unsigned eff_size, uint64_t data, ThreadID tid);
 
     // invalidate the corresponding entry, call upon a store instruction
     // return true if a matching entry was found
-    bool invalidate(Addr instPC, Addr LwdataAddr, ThreadID tid);
+    bool invalidate(Addr instPC, Addr LwdataAddr, Addr St_effsize, ThreadID tid);
 
     // replace the LRU entry, should be called if the table is full
-    void replacement(unsigned instr_idx, Addr data_addr, uint64_t data, ThreadID tid);
+    void replacement(unsigned instr_idx, Addr data_addr, unsigned eff_size, uint8_t data, ThreadID tid);
 
     // keep track of the LRU, should be called everytime
     // an entry is referenced
