@@ -964,6 +964,18 @@ void IEW::dispatchInsts(ThreadID tid)
 
             ++iewStats.dispStoreInsts;
 
+            if (ENABLE_LVP == true)
+                {
+                    // should invalidate right after execute
+                    // wait until commit will be late
+                    // uint64_t stdata;
+                    lvp_unit->cvu_invalidate(inst);
+                    // memcpy(&stdata,inst->memData, inst->effSize);
+
+                    DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d store_addr:0x%x, store_size%u SW instruction\n",
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr, inst->effSize);
+                }
+
             if (inst->isStoreConditional()) {
                 // Store conditionals need to be set as "canCommit()"
                 // so that commit can process them when they reach the
