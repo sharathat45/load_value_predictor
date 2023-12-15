@@ -60,6 +60,7 @@ if env['CONF']['TARGET_ISA'] != 'null':
     Source('cvu.cc')
     Source('2bit_lct.cc')
     Source('lvp_unit.cc')
+    Source('vptt.cc')
 
     DebugFlag('CommitRate')
     DebugFlag('IEW')

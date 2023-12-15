@@ -17,7 +17,7 @@ COMMIT_END =  1e3d7d0
 
 BENCHMARK_CONFIG = configs/spec/spec_se.py
 DEBUG_CLASS = LVPUnit
-DEBUG = 0
+DEBUG = 1
 
 ENABLE_LVP = 1
 
@@ -32,7 +32,7 @@ endif
 .PHONY: run clean build patch benchmark hello debug sjeng lbm milc astar leslie3d namd 
 
 $(EXECUTABLE): $(SRC_C)
-	$(CC) $(SRC_C) -o $(EXECUTABLE) -lm5
+	$(CC) $(SRC_C) -o $(EXECUTABLE) -lm5 
 
 build:
 	scons USE_HDF5=0 -j `nproc` $(MODEL)

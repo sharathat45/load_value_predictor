@@ -84,31 +84,29 @@ class LVPUnit : public SimObject
 
     struct LVPUnitStats : public statistics::Group
     {
-        LVPUnitStats(statistics::Group *parent);
-
-        /** Stat for number of lds predicted. */
-        statistics::Scalar ldvalPredicted;
-        
-        /** Stat for number of lds predicted as zero. */
-        statistics::Scalar ldvalPredicted_0;
+        LVPUnitStats(statistics::Group *parent);        
         statistics::Scalar wrongldConst;
         statistics::Scalar totalldConst;
-        statistics::Scalar ldConst_as_zero;
-        
+        /** Stat for total number of LVP lookups. */
+        statistics::Scalar lookups;
+        /** Stat for total number of lds predicted. */
+        statistics::Scalar predTotal;
+        /** Stat for number of lds predicted correctly. */
+        statistics::Scalar predCorrect;
         /** Stat for number of lds predicted incorrectly. */
-        statistics::Scalar ldvalIncorrect;
+        statistics::Scalar predIncorrect;
+        /** Stat for fraction of lookups resulting in prediction. */
+        statistics::Formula predRate;
         /** Stat for fraction of predicted lds predicted correctly. */
-        statistics::Formula ldvalAccuracy;
-        /** Stat for number of LCT lookups. */
-        statistics::Scalar LCTLookups;
-        /** Stat for number of LCT predictable lookups. */
-        statistics::Scalar LCTPredictable;
-        /** Stat for number of LVPT lookups. */
-        statistics::Scalar LVPTLookups;
-        /** Stat for number of LVPT hits. */
-        statistics::Scalar LVPTHits;
-        /** Stat for the ratio between LVPT hits and LVPT lookups. */
-        statistics::Formula LVPTHitRatio;
+        statistics::Formula predAccuracy;
+        /** Stat for number of constant predictions. */
+        statistics::Scalar constPred;
+        /** Stat for number of constant entries invalidated. */
+        statistics::Scalar constInval;
+        /** Stat for number of constant loads that required rollback. */
+        statistics::Scalar constRollback;
+        /** Stat for fraction of constant predictions that required rollback.. */
+        statistics::Formula constRollbackRate;
     } stats;
 
   protected:

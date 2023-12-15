@@ -681,6 +681,8 @@ Decode::decodeInsts(ThreadID tid)
             lvp_unit->predict(inst);
             DPRINTF(LVPUnit, "Decode: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d  predVal:%u\n",
                     inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue());
+
+            lvp_unit->predict(inst);
         }
         else
         {

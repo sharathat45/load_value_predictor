@@ -935,19 +935,7 @@ void IEW::dispatchInsts(ThreadID tid)
             // Reserve a spot in the load store queue for this
             // memory access.
             ldstQueue.insertLoad(inst);
-
-            // If the load is constant, then we can skip the memory access
-            if (ENABLE_LVP == true)
-            {
-                DPRINTF(LVPUnit, "Dispatch: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:%u isInLSQ:%d constantld:%d \n",
-                        tid, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->isInLSQ(), inst->readLdConstant());
-            }
-            else{
-                // Reserve a spot in the load store queue for this
-                // memory access.
-                ldstQueue.insertLoad(inst);
-            }
-
+            
             ++iewStats.dispLoadInsts;
 
             add_to_iq = true;
@@ -1193,7 +1181,6 @@ void IEW::executeInsts()
                     DPRINTF(LVPUnit, "Execute: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d isInLSQ:%d store_addr:0x%x, store_size%u SW instruction\n",
                             inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->isInLSQ(), inst->effAddr, inst->effSize);
                 }
-                
 
                 if (inst->isTranslationDelayed() &&
                     fault == NoFault) {
@@ -1399,7 +1386,31 @@ void IEW::writebackInsts()
                 iewStats.producerInst[tid]++;
                 iewStats.consumerInst[tid]+= dependents;
             }
+
             iewStats.writebackCount[tid]++;
+
+            // If we're writing back a load instruction, check if it was predicted correctly
+            if (ENABLE_LVP == true && inst->isLoad())
+            {
+                if (inst->memOpDone() && inst->memData != nullptr)
+                {
+                    // Update the LVP unit with the status of this prediction if the memory access is done
+                    lvp_unit->update(inst);
+
+                    if (inst->readLdConstant()) {
+                        if (memcmp(&(inst->PredictedLdValue()), inst->memData, 8)) {
+                            DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x pred_val:0x%x != mem_val:0x%x *** MISMATCH ***\n",
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->PredictedLdValue(), *((uint64_t*)(inst->memData)));
+                        } else {
+                            DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x pred_val:0x%x == mem_val:0x%x\n",
+                            inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->PredictedLdValue(), *((uint64_t*)(inst->memData)));
+                        }
+                    }
+                }
+
+                DPRINTF(LVPUnit, "WB: [tid:%i] [sn:%llu] PC:0x%x memOpDone:%d predVal:0x%x data_Addr:0x%x isInLSQ:%d constantld:%d \n",
+                        inst->threadNumber, inst->seqNum, (inst->pcState()).instAddr(), inst->memOpDone(), inst->PredictedLdValue(), inst->effAddr, inst->isInLSQ(), inst->readLdConstant());
+            }
         }
 
     }

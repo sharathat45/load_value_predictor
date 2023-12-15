@@ -25,14 +25,6 @@ LCT::LCT(unsigned _lctSize, unsigned _lctCtrBits, unsigned _instShiftAmt, unsign
     if (!isPowerOf2(lctPredictorSets)) {
         fatal("LCT: Invalid number of LCT predictor sets! Check lctCtrBits.\n");
     }
-
-    DPRINTF(LVPUnit, "LCT: index mask: %#x\n", indexMask);
-
-    DPRINTF(LVPUnit, "LCT: local predictor size: %i\n", lctSize);
-
-    DPRINTF(LVPUnit, "LCT: local counter bits: %i\n", lctCtrBits);
-
-    DPRINTF(LVPUnit, "LCT: instruction shift amount: %i\n", instShiftAmt);
 }
 
 uint8_t LCT::lookup(ThreadID tid, Addr inst_addr)
@@ -55,11 +47,6 @@ bool LCT::getPrediction(uint8_t &count)
 void LCT::update(ThreadID tid, Addr inst_addr, bool prediction_outcome, bool squashed)
 {
     unsigned lct_idx,lct_update;
-
-    // No state to restore, and we do not update on the wrong path.
-    if (squashed) {
-        return;
-    }
 
     // Update the local predictor.
     lct_idx = getLocalIndex(inst_addr);
