@@ -1,5 +1,16 @@
 # Load Value Predictor
 
+LVP unit source files:
+   src/cpu/o3/lvp_unit
+   src/cpu/o3/lvpt
+   src/cpu/o3/2bit_lct
+   src/cpu/o3/cvu
+
+Helper files:
+   Makefile
+   scripts/benchmark_sweep.sh
+   analysis/
+
 This project uses the default config O3CPU with the ARM ISA.
 
 ## Makefile Commands
