@@ -1,5 +1,8 @@
 # Load Value Predictor
 
+![LVP](https://github.com/sharathat45/load_value_predictor/assets/46818446/be252f4f-90dc-4292-994b-91aff5d6f520)
+
+
 LVP unit source files:
   - src/cpu/o3/lvp_unit
   - src/cpu/o3/lvpt
